@@ -1,6 +1,8 @@
 module ParserSpec.Util
        ( num
        , bool
+       , stringLiteral
+       , isUndefined
        , app
        , app'
        , lambda'

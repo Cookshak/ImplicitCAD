@@ -28,6 +28,27 @@ isUndef source =
 ternaryIssue :: Expectation -> Expectation
 ternaryIssue _ = pendingWith "parser doesn't handle ternary operator correctly"
 
+listIssue :: Expectation -> Expectation
+listIssue _ = pendingWith "the list construct does not exist in OpenSCAD and provides no syntactic or semantic advantage, and may make the parser more complex."
+
+enableAlternateParser = True
+
+originalParserAdditionAstStyle :: Expectation -> Expectation
+originalParserAdditionAstStyle a = 
+    if enableAlternateParser 
+    then pendingWith "original parser generates + expression trees differently than - expression trees. The experimental parser treats them the same."
+    else a
+    
+experimentalParserAstStyle a = 
+    if enableAlternateParser 
+    then a 
+    else pendingWith "The test was written for the experimental parser's AST generation."
+
+experimentalFeature a = 
+    if enableAlternateParser 
+    then a 
+    else pendingWith "This tests a feature of the experimental parser that does not work in the original parser."
+
 logicalSpec :: Spec
 logicalSpec = do
   it "handles not" $ "!foo" --> (app' "!" [Var "foo"])
@@ -42,8 +63,13 @@ logicalSpec = do
     specify "with comparison in head position" $
       "1 > 0 ? 5 : -5" --> app' "?" [app' ">" [num 1, num 0], num 5, num (-5)]
     specify "with comparison in head position, and addition in tail" $
+     originalParserAdditionAstStyle $ ternaryIssue $
       "1 > 0 ? 5 : 1 + 2" -->
       app' "?" [app' ">" [num 1, num 0], num 5, app "+" [num 1, num 2]]
+    specify "with comparison in head position, and addition in tail" $
+     experimentalFeature $
+      "1 > 0 ? 5 : 1 + 2" -->
+      app' "?" [app' ">" [num 1, num 0], num 5, app' "+" [num 1, num 2]]
 
 literalSpec :: Spec
 literalSpec = do
@@ -67,11 +93,11 @@ letBindingSpec = do
     it "handles let with integer binding and spaces" $ do
         "let ( a = 1 ) a" --> lambda' [Name "a"] (Var "a") [num 1]
     it "handles multiple variable let" $ do
-        "let (a = x, b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
+        "let (a = x, b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
     it "handles empty let" $ do
         "let () a" --> (Var "a")
     it "handles nested let" $ do
-        "let(a=x) let(b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
+        "let(a=x) let(b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
     
 exprSpec :: Spec
 exprSpec = do
@@ -83,13 +109,33 @@ exprSpec = do
   describe "grouping" $ do
     it "allows parens" $ do
       "( false )" -->  bool False
+    it "handles empty vectors" $ do
+      "[]" -->  ListE []
+    it "handles single element vectors" $ do
+      "[a]" -->  ListE [Var "a"]
     it "handles vectors" $ do
       "[ 1, 2, 3 ]" -->  ListE [num 1, num 2, num 3]
+    it "handles nested vectors" $ do
+      "[ 1, [2, 7], [3, 4, 5, 6] ]" -->  ListE [num 1, ListE [num 2, num 7], ListE [num 3, num 4, num 5, num 6]]
     it "handles lists" $ do
+     listIssue $ 
       "( 1, 2, 3 )" -->  ListE [num 1, num 2, num 3]
     it "handles generators" $
+      originalParserAdditionAstStyle $ 
       "[ a : 1 : b + 10 ]" -->
       (app "list_gen" [Var "a", num 1, app "+" [Var "b", num 10]])
+    it "handles generators" $
+     experimentalParserAstStyle $
+      "[ a : b ]" -->
+      (app "list_gen" [Var "a", num 1, Var "b"])
+    it "handles generators with expression" $
+     experimentalParserAstStyle $
+      "[ a : b + 10 ]" -->
+      (app "list_gen" [Var "a", num 1, app' "+" [Var "b", num 10]])
+    it "handles increment generators" $
+     experimentalParserAstStyle $
+      "[ a : 3 : b + 10 ]" -->
+      (app "list_gen" [Var "a", num 3, app' "+" [Var "b", num 10]])
     it "handles indexing" $
       "foo[23]" --> Var "index" :$ [Var "foo", num 23]
     it "handles multiple indexes" $
@@ -117,29 +163,66 @@ exprSpec = do
     it "handles unary + with string literal" $ do
       "+\"foo\"" -->  stringLiteral "foo"
     it "handles +" $ do
+     originalParserAdditionAstStyle $ 
       "1 + 2" --> app "+" [num 1, num 2]
+     originalParserAdditionAstStyle $ 
       "1 + 2 + 3" --> app "+" [num 1, num 2, num 3]
+    it "handles 2 term +" $ do
+     experimentalParserAstStyle $
+      "1 + 2" --> app' "+" [num 1, num 2]
+    it "handles > 2 term +" $ do
+     experimentalParserAstStyle $
+      "1 + 2 + 3" --> app' "+" [app' "+" [num 1, num 2], num 3]
     it "handles -" $ do
       "1 - 2" --> app' "-" [num 1, num 2]
       "1 - 2 - 3" --> app' "-" [app' "-" [num 1, num 2], num 3]
     it "handles +/- in combination" $ do
+     originalParserAdditionAstStyle $
       "1 + 2 - 3" --> app "+" [num 1, app' "-" [num 2, num 3]]
+     originalParserAdditionAstStyle $
       "2 - 3 + 4" --> app "+" [app' "-" [num 2, num 3], num 4]
+     originalParserAdditionAstStyle $
       "1 + 2 - 3 + 4" --> app "+" [num 1, app' "-" [num 2, num 3], num 4]
+     originalParserAdditionAstStyle $
       "1 + 2 - 3 + 4 - 5 - 6" --> app "+" [num 1,
                                            app' "-" [num 2, num 3],
                                            app' "-" [app' "-" [num 4, num 5],
                                                      num 6]]
+    describe "handles +/- in combination, deeper tree AST" $ do
+      it "handles 1 + 2 - 3" $ do
+       experimentalParserAstStyle $
+        "1 + 2 - 3" --> app' "-" [app' "+" [num 1, num 2], num 3]
+      it "handles 2 - 3 + 4" $ do
+       experimentalParserAstStyle $
+        "2 - 3 + 4" --> app' "+" [app' "-" [num 2, num 3], num 4]
+      it "handles 1 + 2 - 3 + 4" $ do
+       experimentalParserAstStyle $
+        "1 + 2 - 3 + 4" --> app' "+" [app' "-" [app' "+" [num 1, num 2], num 3], num 4]
+      it "handles 1 + 2 - 3 + 4 - 5 - 6" $ do
+       experimentalParserAstStyle $
+        "1 + 2 - 3 + 4 - 5 - 6" --> app' "-" [app' "-" [app' "+" [app' "-" [app' "+" [num 1, num 2], num 3], num 4], num 5], num 6]
     it "handles exponentiation" $
       "x ^ y" -->  app' "^" [Var "x", Var "y"]
     it "handles *" $ do
+     originalParserAdditionAstStyle $
       "3 * 4" -->  app "*" [num 3, num 4]
+     originalParserAdditionAstStyle $
       "3 * 4 * 5" -->  app "*" [num 3, num 4, num 5]
+    it "handles *" $ do
+     experimentalParserAstStyle $
+      "3 * 4" -->  app' "*" [num 3, num 4]
+     experimentalParserAstStyle $
+      "3 * 4 * 5" -->  app' "*" [app' "*" [num 3, num 4], num 5]
     it "handles /" $
       "4.2 / 2.3" -->  app' "/" [num 4.2, num 2.3]
     it "handles precedence" $
+     originalParserAdditionAstStyle $
       parseExpr "1 + 2 / 3 * 5" `shouldBe`
-      (Right $ app "+" [num 1, app "*" [app' "/" [num 2, num 3], num 5]])
+       (Right $ app "+" [num 1, app "*" [app' "/" [num 2, num 3], num 5]])
+    it "handles precedence" $
+     experimentalParserAstStyle $
+      parseExpr "1 + 2 / 3 * 5" `shouldBe`
+      (Right $ app' "+" [num 1, app' "*" [app' "/" [num 2, num 3], num 5]])
   it "handles append" $
     parseExpr "foo ++ bar ++ baz" `shouldBe`
     (Right $ app "++" [Var "foo", Var "bar", Var "baz"])
