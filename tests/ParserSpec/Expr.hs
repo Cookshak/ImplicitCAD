@@ -18,6 +18,13 @@ infixr 1 -->+
 (-->+) source (result, leftover) =
   (parseWithLeftOver expr0 source) `shouldBe` (Right (result, leftover))
 
+isUndef source = 
+    let result = (parseExpr source)
+        undef (Right (LitE OUndefined)) = True
+        undef _ = False
+    in
+        undef result `shouldBe` True
+ 
 ternaryIssue :: Expectation -> Expectation
 ternaryIssue _ = pendingWith "parser doesn't handle ternary operator correctly"
 
@@ -33,15 +40,22 @@ logicalSpec = do
     specify "with parenthesized comparison" $
       "(1 > 0) ? 5 : -5" --> app' "?" [app' ">" [num 1, num 0], num 5, num (-5)]
     specify "with comparison in head position" $
-      ternaryIssue $ "1 > 0 ? 5 : -5" --> app' "?" [app' ">" [num 1, num 0], num 5, num (-5)]
+      "1 > 0 ? 5 : -5" --> app' "?" [app' ">" [num 1, num 0], num 5, num (-5)]
     specify "with comparison in head position, and addition in tail" $
-      ternaryIssue $ "1 > 0 ? 5 : 1 + 2" -->
+      "1 > 0 ? 5 : 1 + 2" -->
       app' "?" [app' ">" [num 1, num 0], num 5, app "+" [num 1, num 2]]
 
 literalSpec :: Spec
 literalSpec = do
-  it "handles integers" $ do
-    "12356" -->  num 12356
+  describe "integers" $ do
+    it "handles integers" $ do
+      "12356" -->  num 12356
+    it "handles positive leading zero integers" $ do
+      "000012356" -->  num 12356
+    it "handles zero integer" $ do
+      "0" -->  num 0
+    it "handles leading zero integer" $ do
+      "0000" -->  num 0
   it "handles floats" $ do
     "23.42" -->  num 23.42
   describe "booleans" $ do
@@ -66,7 +80,6 @@ exprSpec = do
     it "accepts valid variable names" $ do
       "foo" --> Var "foo"
       "foo_bar" --> Var "foo_bar"
-  describe "literals" $ literalSpec
   describe "grouping" $ do
     it "allows parens" $ do
       "( false )" -->  bool False
@@ -79,11 +92,30 @@ exprSpec = do
       (app "list_gen" [Var "a", num 1, app "+" [Var "b", num 10]])
     it "handles indexing" $
       "foo[23]" --> Var "index" :$ [Var "foo", num 23]
+    it "handles multiple indexes" $
+      "foo[23][12]" --> Var "index" :$ [Var "index" :$ [Var "foo", num 23], num 12]
 
   describe "arithmetic" $ do
-    it "handles unary +/-" $ do
+    it "handles unary -" $ do
       "-42" --> num (-42)
+    it "handles unary +" $ do
       "+42" -->  num 42
+    it "handles unary - with extra spaces" $ do
+      "-  42" --> num (-42)
+    it "handles unary + with extra spaces" $ do
+      "+  42" -->  num 42
+    it "handles unary - with parentheses" $ do
+      "-(4 - 3)" --> app' "-" [app' "-" [num 4, num 3]]
+    it "handles unary + with parentheses" $ do
+      "+(4 - 1)" -->  app' "-" [num 4, num 1]
+    it "handles unary - with identifier" $ do
+      "-foo" --> app' "-" [Var "foo"]
+    it "handles unary + with identifier" $ do
+      "+foo" -->  Var "foo"
+    it "handles unary - with string literal" $ do
+      isUndef "-\"foo\""
+    it "handles unary + with string literal" $ do
+      "+\"foo\"" -->  stringLiteral "foo"
     it "handles +" $ do
       "1 + 2" --> app "+" [num 1, num 2]
       "1 + 2 + 3" --> app "+" [num 1, num 2, num 3]

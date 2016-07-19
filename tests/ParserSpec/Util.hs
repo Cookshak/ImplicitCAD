@@ -19,14 +19,21 @@ import Text.ParserCombinators.Parsec  hiding (State)
 import Control.Applicative ((<$>), (<*>), (<*), (*>))
 
 num :: ℝ -> Expr
-num x
+num x = LitE $ ONum x
   -- note that the parser should handle negative number literals
   -- directly, we abstract that deficiency away here
-  | x < 0 = app' "negate" [LitE $ ONum (-x)]
-  | otherwise = LitE $ ONum x
+  -- | x < 0 = app' "negate" [LitE $ ONum (-x)]
+  -- | otherwise = LitE $ ONum x
 
 bool :: Bool -> Expr
 bool = LitE . OBool
+
+stringLiteral :: String -> Expr
+stringLiteral = LitE . OString
+
+isUndefined :: OVal -> Bool
+isUndefined OUndefined = True
+isUndefined _ = False
 
 -- Operators and functions need two different kinds of applications
 app :: String -> [Expr] -> Expr
