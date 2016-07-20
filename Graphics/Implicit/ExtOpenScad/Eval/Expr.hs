@@ -55,21 +55,22 @@ evalExpr' (LitE  val  ) = return $ const val
 
 evalExpr' (ListE exprs) = do
     valFuncs <- Monad.mapM evalExpr' exprs
-    return $ \s -> OList $ map ($s) valFuncs
+    return $ \s -> OList $ map ($ s) valFuncs
 
-evalExpr' (fexpr :$ argExprs) = do
-    argValFuncs <- Monad.mapM evalExpr' argExprs
-    fValFunc <- evalExpr' fexpr
-    return $ \s -> app (fValFunc s) (map ($s) argValFuncs)
-        where 
-            app f l = case (getErrors f, getErrors $ OList l) of
-                (Nothing, Nothing) -> app' f l where
-                    app' (OFunc f) (x:xs) = app (f x) xs
-                    app' a [] = a
-                    app' x _ = OError ["Can't apply arguments to " ++ oTypeStr x]
-                (Just err, _     ) -> OError [err]
-                (_,      Just err) -> OError [err]
+evalExpr' (Var "+" :$ [ListE argExprs]) = 
+    evalExpr'' $ Var "+" :$ [ListE argExprs]
 
+evalExpr' (Var "+" :$ argExprs) = 
+    evalExpr'' $ Var "+" :$ [ListE argExprs]
+
+evalExpr' (Var "*" :$ [ListE argExprs]) = 
+    evalExpr'' $ Var "*" :$ [ListE argExprs]
+
+evalExpr' (Var "*" :$ argExprs) = 
+    evalExpr'' $ Var "*" :$ [ListE argExprs]
+
+evalExpr' (fexpr :$ argExprs) = evalExpr'' (fexpr :$ argExprs)
+    
 evalExpr' (LamE pats fexpr) = do
     fparts <- Monad.forM pats $ \pat -> do
         modify (\(vl, names) -> (vl, patVars pat ++ names))
@@ -79,6 +80,18 @@ evalExpr' (LamE pats fexpr) = do
     fval <- evalExpr' fexpr
     return $ foldr ($) fval fparts
 
+evalExpr'' (fexpr :$ argExprs) = do
+    argValFuncs <- Monad.mapM evalExpr' argExprs
+    fValFunc <- evalExpr' fexpr
+    return $ \s -> app (fValFunc s) (map ($ s) argValFuncs)
+        where 
+            app f l = case (getErrors f, getErrors $ OList l) of
+                (Nothing, Nothing) -> app' f l where
+                    app' (OFunc f) (x:xs) = app (f x) xs
+                    app' a [] = a
+                    app' x _ = OError ["Can't apply arguments to " ++ oTypeStr x]
+                (Just err, _     ) -> OError [err]
+                (_,      Just err) -> OError [err]
 
 --------------
 
