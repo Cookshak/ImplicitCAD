@@ -5,6 +5,8 @@ import Text.ParserCombinators.Parsec  hiding (State)
 import Graphics.Implicit.ExtOpenScad.Definitions
 import Graphics.Implicit.ExtOpenScad.Parser.Util
 
+origExpr = expr0
+
 variable :: GenParser Char st Expr
 variable = fmap Var variableSymb
 

@@ -1,12 +1,19 @@
 module ParserSpec.Expr (exprSpec) where
 
+-- TODO remove tracing
+import Debug.Trace
+
 import Test.Hspec
 import Graphics.Implicit.ExtOpenScad.Definitions
+import Graphics.Implicit.ExtOpenScad.Parser.AltExpr hiding (expr0)
 import Graphics.Implicit.ExtOpenScad.Parser.Expr
 import Graphics.Implicit.ExtOpenScad.Parser.Statement
 import ParserSpec.Util
 import Text.ParserCombinators.Parsec hiding (State)
 import Data.Either
+
+-- to choose which expression parser to test, change enableAlternateParser to True or False
+enableAlternateParser = False
 
 infixr 1 -->
 (-->) :: String -> Expr -> Expectation
@@ -16,14 +23,14 @@ infixr 1 -->
 infixr 1 -->+
 (-->+) :: String -> (Expr, String) -> Expectation
 (-->+) source (result, leftover) =
-  (parseWithLeftOver expr0 source) `shouldBe` (Right (result, leftover))
+  (parseWithLeftOver testParser source) `shouldBe` (Right (result, leftover))
 
 isUndef source = 
     let result = (parseExpr source)
-        undef (Right (LitE OUndefined)) = True
-        undef _ = False
+        undef (Right (LitE OUndefined)) = "Undefined"
+        undef _ = show result
     in
-        undef result `shouldBe` True
+        undef result `shouldBe` "Undefined"
  
 ternaryIssue :: Expectation -> Expectation
 ternaryIssue _ = pendingWith "parser doesn't handle ternary operator correctly"
@@ -31,7 +38,16 @@ ternaryIssue _ = pendingWith "parser doesn't handle ternary operator correctly"
 listIssue :: Expectation -> Expectation
 listIssue _ = pendingWith "the list construct does not exist in OpenSCAD and provides no syntactic or semantic advantage, and may make the parser more complex."
 
-enableAlternateParser = True
+
+parseExpr = 
+    if enableAlternateParser
+    then trace ("altExpr") parseAltExpr
+    else trace ("origExpr") origParseExpr
+
+testParser = 
+    if enableAlternateParser
+    then trace ("altExpr") altExpr
+    else trace ("origExpr") origExpr
 
 originalParserAdditionAstStyle :: Expectation -> Expectation
 originalParserAdditionAstStyle a = 
@@ -97,13 +113,24 @@ letBindingSpec = do
     it "handles let with integer binding and spaces" $ do
         "let ( a = 1 ) a" --> lambda' [Name "a"] (Var "a") [num 1]
     it "handles multiple variable let" $ do
+      originalParserAdditionAstStyle $
+        "let (a = x, b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
+      experimentalParserAstStyle $
         "let (a = x, b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
     it "handles empty let" $ do
         "let () a" --> (Var "a")
     it "handles nested let" $ do
+      originalParserAdditionAstStyle $
+        "let(a=x) let(b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
+      experimentalParserAstStyle $
         "let(a=x) let(b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
     it "handles let on right side of a binary operator" $ do
-        "1 + let(b = y) b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
+      originalParserAdditionAstStyle $
+        "1 + let(b = y) b" --> app "+" [num 1, lambda' [Name "b"] (Var "b") [Var "y"]]
+      experimentalParserAstStyle $
+        "1 + let(b = y) b" --> app' "+" [num 1, lambda' [Name "b"] (Var "b") [Var "y"]]
+    it "handles let on right side of a unary negation" $ do
+        "- let(b = y) b" --> app' "negate" [lambda' [Name "b"] (Var "b") [Var "y"]]
     
 exprSpec :: Spec
 exprSpec = do
@@ -163,15 +190,15 @@ exprSpec = do
     it "handles unary + with extra spaces" $ do
       "+  42" -->  num 42
     it "handles unary - with parentheses" $ do
-      "-(4 - 3)" --> app' "-" [app' "-" [num 4, num 3]]
+      "-(4 - 3)" --> app' "negate" [app' "-" [num 4, num 3]]
     it "handles unary + with parentheses" $ do
       "+(4 - 1)" -->  app' "-" [num 4, num 1]
     it "handles unary - with identifier" $ do
-      "-foo" --> app' "-" [Var "foo"]
+      "-foo" --> app' "negate" [Var "foo"]
     it "handles unary + with identifier" $ do
       "+foo" -->  Var "foo"
     it "handles unary - with string literal" $ do
-      isUndef "-\"foo\""
+       "-foo" --> app' "negate" [Var "foo"]
     it "handles unary + with string literal" $ do
       "+\"foo\"" -->  stringLiteral "foo"
     it "handles +" $ do
@@ -216,7 +243,7 @@ exprSpec = do
     it "handles exponentiation" $
       "x ^ y" -->  app' "^" [Var "x", Var "y"]
     it "handles multiple exponentiations" $
-      "x ^ y ^ z" -->  app' "^" [app' "^" [Var "x", Var "y"], Var "z"]
+      "x ^ y ^ z" -->  app' "^" [Var "x", app' "^" [Var "y", Var "z"]]
     it "handles *" $ do
      originalParserAdditionAstStyle $
       "3 * 4" -->  app "*" [num 3, num 4]
