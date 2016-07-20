@@ -70,6 +70,10 @@ logicalSpec = do
      experimentalFeature $
       "1 > 0 ? 5 : 1 + 2" -->
       app' "?" [app' ">" [num 1, num 0], num 5, app' "+" [num 1, num 2]]
+    specify "nested in true and false expressions" $
+     experimentalFeature $
+      "c0 ? c1 ? t1 : f1 : c2 ? t2 : f2" -->
+      app' "?" [Var "c0", app' "?" [Var "c1",Var "t1",Var "f1"], app' "?" [Var "c2",Var "t2",Var "f2"]]
 
 literalSpec :: Spec
 literalSpec = do
@@ -140,6 +144,12 @@ exprSpec = do
       "foo[23]" --> Var "index" :$ [Var "foo", num 23]
     it "handles multiple indexes" $
       "foo[23][12]" --> Var "index" :$ [Var "index" :$ [Var "foo", num 23], num 12]
+    it "handles single function call with single argument" $
+      "foo(1)" --> Var "foo" :$ [num 1]
+    it "handles single function call with multiple arguments" $
+      "foo(1, 2, 3)" --> Var "foo" :$ [num 1, num 2, num 3]
+    it "handles multiple function calls" $
+      "foo(1)(2)(3)" --> ((Var "foo" :$ [num 1]) :$ [num 2]) :$ [num 3]
 
   describe "arithmetic" $ do
     it "handles unary -" $ do
@@ -203,6 +213,8 @@ exprSpec = do
         "1 + 2 - 3 + 4 - 5 - 6" --> app' "-" [app' "-" [app' "+" [app' "-" [app' "+" [num 1, num 2], num 3], num 4], num 5], num 6]
     it "handles exponentiation" $
       "x ^ y" -->  app' "^" [Var "x", Var "y"]
+    it "handles multiple exponentiations" $
+      "x ^ y ^ z" -->  app' "^" [app' "^" [Var "x", Var "y"], Var "z"]
     it "handles *" $ do
      originalParserAdditionAstStyle $
       "3 * 4" -->  app "*" [num 3, num 4]
@@ -224,8 +236,13 @@ exprSpec = do
       parseExpr "1 + 2 / 3 * 5" `shouldBe`
       (Right $ app' "+" [num 1, app' "*" [app' "/" [num 2, num 3], num 5]])
   it "handles append" $
+   originalParserAdditionAstStyle $
     parseExpr "foo ++ bar ++ baz" `shouldBe`
     (Right $ app "++" [Var "foo", Var "bar", Var "baz"])
+  it "handles append" $
+   experimentalParserAstStyle $
+    parseExpr "foo ++ bar ++ baz" `shouldBe`
+    (Right $ app' "++" [app' "++" [Var "foo", Var "bar"], Var "baz"])
   describe "logical operators" logicalSpec
   describe "let expressions" letBindingSpec
   
