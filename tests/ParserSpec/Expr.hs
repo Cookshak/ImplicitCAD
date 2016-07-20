@@ -102,6 +102,8 @@ letBindingSpec = do
         "let () a" --> (Var "a")
     it "handles nested let" $ do
         "let(a=x) let(b = y) a + b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
+    it "handles let on right side of a binary operator" $ do
+        "1 + let(b = y) b" --> lambda' [Name "a"] ((lambda' [Name "b"] (app' "+" [Var "a", Var "b"])) [Var "y"]) [Var "x"]
     
 exprSpec :: Spec
 exprSpec = do
