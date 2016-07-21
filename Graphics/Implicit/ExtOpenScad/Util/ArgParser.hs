@@ -1,5 +1,8 @@
+-- Implicit CAD. Copyright (C) 2011, Christopher Olah (chris@colah.ca)
+-- Released under the GNU GPL, see LICENSE
 
 {-# LANGUAGE ViewPatterns, RankNTypes, ScopedTypeVariables #-}
+
 module Graphics.Implicit.ExtOpenScad.Util.ArgParser where
 
 import Graphics.Implicit.ExtOpenScad.Definitions
@@ -10,7 +13,7 @@ import Control.Applicative(Alternative(..))
 import Control.Monad (mzero, mplus, MonadPlus, liftM, ap)
 
 instance Functor ArgParser where
-    fmap  = liftM
+    fmap = liftM
 
 instance Applicative ArgParser where
     pure = return
@@ -18,13 +21,13 @@ instance Applicative ArgParser where
 
 instance Monad ArgParser where
 
-    -- return is easy: if we want an ArgParser that just gives us a, that is 
+    -- return is easy: if we want an ArgParser that just gives us a, that is
     -- ArgParserTerminator a
     return a = APTerminator a
 
     -- Now things get more interesting. We need to describe how (>>=) works.
     -- Let's get the hard ones out of the way first.
-    -- ArgParser actually 
+    -- ArgParser actually
     (AP str fallback doc f) >>= g = AP str fallback doc (\a -> (f a) >>= g)
     (APFailIf b errmsg child) >>= g = APFailIf b errmsg (child >>= g)
     -- These next to is easy, they just pass the work along to their child
@@ -50,7 +53,7 @@ instance Alternative ArgParser where
 -- ** argument and combinators
 
 argument :: forall desiredType. (OTypeMirror desiredType) => String -> ArgParser desiredType
-argument name = 
+argument name =
     AP name Nothing "" $ \oObjVal -> do
         let
             val = fromOObj oObjVal :: Maybe desiredType
@@ -85,7 +88,7 @@ eulerCharacteristic (APTest str tests child) χ =
 
 -- | Apply arguments to an ArgParser
 
-argMap :: 
+argMap ::
     [(Maybe String,  OVal)]      -- ^ arguments
     -> ArgParser a              -- ^ ArgParser to apply them to
     -> (Maybe a, [String])      -- ^ (result, error messages)
@@ -105,11 +108,11 @@ argMap2 uArgs nArgs (APBranch branches) =
         merge a@(Just _, _) _ = a
         merge (Nothing, _)  a = a
 
-argMap2 unnamedArgs namedArgs (AP name fallback _ f) = 
+argMap2 unnamedArgs namedArgs (AP name fallback _ f) =
     case Map.lookup name namedArgs of
-        Just a -> argMap2 
-            unnamedArgs 
-            (Map.delete name namedArgs) 
+        Just a -> argMap2
+            unnamedArgs
+            (Map.delete name namedArgs)
             (f a)
         Nothing -> case unnamedArgs of
             x:xs -> argMap2 xs namedArgs (f x)
@@ -117,15 +120,15 @@ argMap2 unnamedArgs namedArgs (AP name fallback _ f) =
                 Just b  -> argMap2 [] namedArgs (f b)
                 Nothing -> (Nothing, ["No value and no default for argument " ++ name])
 
-argMap2 a b (APTerminator val) = 
+argMap2 a b (APTerminator val) =
     (Just val,
         if not (null a && Map.null b)
         then ["unused arguments"]
         else []
     )
 
-argMap2 a b (APFailIf test err child) = 
-    if test 
+argMap2 a b (APFailIf test err child) =
+    if test
     then (Nothing, [err])
     else argMap2 a b child
 
@@ -152,11 +155,11 @@ data DocPart = ExampleDoc String
 
 -- | Extract Documentation from an ArgParser
 
-getArgParserDocs :: 
+getArgParserDocs ::
     (ArgParser a)    -- ^ ArgParser
     -> IO [DocPart]  -- ^ Docs (sadly IO wrapped)
 
-getArgParserDocs (ArgParser name fallback doc fnext) = 
+getArgParserDocs (ArgParser name fallback doc fnext) =
     do
         otherDocs <- Ex.catch (getArgParserDocs $ fnext undefined) (\(e :: Ex.SomeException) -> return [])
         return $ (ArgumentDoc name (fmap show fallback) doc):otherDocs

@@ -7,7 +7,7 @@ import Graphics.Implicit.Definitions
 import Graphics.Implicit.Export.Render.Definitions
 import Graphics.Implicit.Export.Util (centroid)
 import Data.VectorSpace
-import Data.Cross       
+import Data.Cross
 
 tesselateLoop :: ℝ -> Obj3 -> [[ℝ3]] -> [TriSquare]
 
@@ -25,12 +25,12 @@ tesselateLoop _ _ [[a,b],[_,c],[_,_]] = return $ Tris [(a,b,c)]
 -}
 
 tesselateLoop res obj [[_,_], as@(_:_:_:_),[_,_], bs@(_:_:_:_)] | length as == length bs =
-    concat $ map (tesselateLoop res obj) $ 
+    concat $ map (tesselateLoop res obj) $
         [[[a1,b1],[b1,b2],[b2,a2],[a2,a1]] | ((a1,b1),(a2,b2)) <- zip (init pairs) (tail pairs)]
             where pairs = zip (reverse as) bs
 
 tesselateLoop res obj [as@(_:_:_:_),[_,_], bs@(_:_:_:_), [_,_] ] | length as == length bs =
-    concat $ map (tesselateLoop res obj) $ 
+    concat $ map (tesselateLoop res obj) $
         [[[a1,b1],[b1,b2],[b2,a2],[a2,a1]] | ((a1,b1),(a2,b2)) <- zip (init pairs) (tail pairs)]
             where pairs = zip (reverse as) bs
 
@@ -73,7 +73,7 @@ tesselateLoop res obj pathSides = return $ Tris $
         normal = preNormal ^/ preNormalNorm
         deriv = (obj (mid ^+^ (normal ^* (res/100)) ) ^-^ midval)/res*100
         mid' = mid ^-^ normal ^* (midval/deriv)
-    in if abs midval > res/50 && preNormalNorm > 0.5 && abs deriv > 0.5 
+    in if abs midval > res/50 && preNormalNorm > 0.5 && abs deriv > 0.5
               && abs (midval/deriv) < 2*res && 3*abs (obj mid') < abs midval
         then early_tris ++ [(a,b,mid') | (a,b) <- zip path (tail path ++ [head path]) ]
         else early_tris ++ [(a,b,mid) | (a,b) <- zip path (tail path ++ [head path]) ]
@@ -83,17 +83,17 @@ shrinkLoop :: Int -> [ℝ3] -> ℝ -> Obj3 -> ([Triangle], [ℝ3])
 
 shrinkLoop _ path@[a,b,c] res obj =
     if   abs (obj $ centroid [a,b,c]) < res/50
-    then 
+    then
         ( [(a,b,c)], [])
-    else 
+    else
         ([], path)
 
 shrinkLoop n path@(a:b:c:xs) res obj | n < length path =
     if abs (obj (centroid [a,c])) < res/50
-    then 
+    then
         let (tris,remainder) = shrinkLoop 0 (a:c:xs) res obj
         in ((a,b,c):tris, remainder)
-    else 
+    else
         shrinkLoop (n+1) (b:c:xs ++ [a]) res obj
 
 shrinkLoop _ path _ _ = ([],path)

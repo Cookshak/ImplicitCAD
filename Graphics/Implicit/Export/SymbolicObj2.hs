@@ -18,7 +18,7 @@ import Graphics.Implicit.ObjectUtil
 import Graphics.Implicit.Export.Symbolic.Rebound2
 
 import qualified Graphics.Implicit.Export.Render as Render (getContour)
-       
+
 import Data.VectorSpace
 
 instance DiscreteAproxable SymbolicObj2 [Polyline] where
@@ -29,8 +29,8 @@ symbolicGetOrientedContour res symbObj = map orient $ symbolicGetContour res sym
     where
         obj = getImplicit2 symbObj
         orient :: Polyline -> Polyline
-        orient points@(x:y:_) = 
-            let 
+        orient points@(x:y:_) =
+            let
                 v = (\(a,b) -> (b, -a)) (y - x)
                 dv = v ^/ (magnitude v / res / 0.1)
             in if obj (x + dv) - obj x > 0
@@ -54,11 +54,11 @@ symbolicGetContourMesh res (Translate2 v obj) = map (\(a,b,c) -> (a + v, b + v, 
 symbolicGetContourMesh res (Scale2 s@(a,b) obj) = map (\(c,d,e) -> (c ⋯* s, d ⋯* s, e ⋯* s) )  $
     symbolicGetContourMesh (res/sc) obj where sc = max a b
 symbolicGetContourMesh _ (RectR 0 (x1,y1) (x2,y2)) = [((x1,y1), (x2,y1), (x2,y2)), ((x2,y2), (x1,y2), (x1,y1)) ]
-symbolicGetContourMesh res (Circle r) = 
+symbolicGetContourMesh res (Circle r) =
     [ ((0,0),
-       (r*cos(2*pi*m/n), r*sin(2*pi*m/n)), 
-       (r*cos(2*pi*(m+1)/n), r*sin(2*pi*(m+1)/n)) 
-      )| m <- [0.. n-1] ] 
+       (r*cos(2*pi*m/n), r*sin(2*pi*m/n)),
+       (r*cos(2*pi*(m+1)/n), r*sin(2*pi*(m+1)/n))
+      )| m <- [0.. n-1] ]
     where
         n = max 5 (fromIntegral $ ceiling $ 2*pi*r/res)
 symbolicGetContourMesh res obj = case rebound2 (getImplicit2 obj, getBox2 obj) of

@@ -12,8 +12,8 @@ import Data.VectorSpace
 
 normTriangle :: ℝ -> Obj3 -> Triangle -> NormedTriangle
 normTriangle res obj (a,b,c) =
-    (normify a', normify b', normify c') 
-        where 
+    (normify a', normify b', normify c')
+        where
             normify = normVertex res obj
             a' = (a ^+^ r*^b ^+^ r*^c) ^/ 1.02
             b' = (b ^+^ r*^a ^+^ r*^c) ^/ 1.02
@@ -21,7 +21,7 @@ normTriangle res obj (a,b,c) =
             r = 0.01 :: ℝ
 
 normVertex :: ℝ -> Obj3 -> ℝ3 -> (ℝ3, ℝ3)
-normVertex res obj p = 
+normVertex res obj p =
     let
         -- D_vf(p) = ( f(p) - f(p+v) ) /|v|
         -- but we'll actually scale v by res, so then |v| = res
@@ -44,20 +44,20 @@ centroid pts =
 {--- If we need to make a 2D mesh finer...
 divideMesh2To :: ℝ -> [(ℝ2, ℝ2, ℝ2)] -> [(ℝ2, ℝ2, ℝ2)]
 divideMesh2To res mesh =
-    let 
+    let
         av :: ℝ2 -> ℝ2 -> ℝ2
         av a b = (a S.+ b) S./ (2.0 :: ℝ)
         divideTriangle :: (ℝ2, ℝ2, ℝ2) -> [(ℝ2, ℝ2, ℝ2)]
         divideTriangle (a,b,c) =
             case (S.norm (a S.- b) > res, S.norm (b S.- c) > res, S.norm (c S.- a) > res) of
                 (False, False, False) -> [(a,b,c)]
-                (True,  False, False) -> [(a, av a b, c), 
+                (True,  False, False) -> [(a, av a b, c),
                                           (av a b, b, c) ]
-                (True,  True,  False) -> [(a, av a b, av a c), 
-                                              (av a b, b, av a c), 
+                (True,  True,  False) -> [(a, av a b, av a c),
+                                              (av a b, b, av a c),
                                           (b, c, av a c)]
-                (True,  True,  True ) -> [(a, av a b, av a c), 
-                                          (b, av b c, av b a), 
+                (True,  True,  True ) -> [(a, av a b, av a c),
+                                          (b, av b c, av b a),
                                           (c, av c a, av c b),
                                           (av b c, av a c, av a b)]
                 (_,_,_) -> divideTriangle (c, a, b)
@@ -66,20 +66,20 @@ divideMesh2To res mesh =
 
 divideMeshTo :: ℝ -> [(ℝ3, ℝ3, ℝ3)] -> [(ℝ3, ℝ3, ℝ3)]
 divideMeshTo res mesh =
-    let 
+    let
         av :: ℝ3 -> ℝ3 -> ℝ3
         av a b = (a S.+ b) S./ (2.0 :: ℝ)
         divideTriangle :: (ℝ3, ℝ3, ℝ3) -> [(ℝ3, ℝ3, ℝ3)]
         divideTriangle (a,b,c) =
             case (S.norm (a S.- b) > res, S.norm (b S.- c) > res, S.norm (c S.- a) > res) of
                 (False, False, False) -> [(a,b,c)]
-                (True,  False, False) -> [(a, av a b, c), 
+                (True,  False, False) -> [(a, av a b, c),
                                           (av a b, b, c) ]
-                (True,  True,  False) -> [(a, av a b, av a c), 
-                                              (av a b, b, av a c), 
+                (True,  True,  False) -> [(a, av a b, av a c),
+                                              (av a b, b, av a c),
                                           (b, c, av a c)]
-                (True,  True,  True ) -> [(a, av a b, av a c), 
-                                          (b, av b c, av b a), 
+                (True,  True,  True ) -> [(a, av a b, av a c),
+                                          (b, av b c, av b a),
                                           (c, av c a, av c b),
                                           (av b c, av a c, av a b)]
                 (_,_,_) -> divideTriangle (c, a, b)
@@ -91,7 +91,7 @@ dividePolylineTo res polyline =
     let
         av :: ℝ2 -> ℝ2 -> ℝ2
         av a b = (a S.+ b) S./ (2.0 :: ℝ)
-        divide a b = 
+        divide a b =
             if S.norm (a S.- b) <= res
             then [a]
             else concat [divide a (av a b), divide (av a b) b]

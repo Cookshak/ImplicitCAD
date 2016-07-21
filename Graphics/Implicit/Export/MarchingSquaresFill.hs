@@ -12,7 +12,7 @@ import Graphics.Implicit.Definitions
 --  to care about from an external perspective.
 
 getContourMesh :: ℝ2 -> ℝ2 -> ℝ2 -> Obj2 -> [(ℝ2,ℝ2,ℝ2)]
-getContourMesh (x1, y1) (x2, y2) (dx, dy) obj = 
+getContourMesh (x1, y1) (x2, y2) (dx, dy) obj =
     let
         -- How many steps will we take on each axis?
         nx = fromIntegral $ ceiling $ (x2 - x1) / dx
@@ -27,16 +27,15 @@ getContourMesh (x1, y1) (x2, y2) (dx, dy) obj =
         triangles = concat $ concat trisOnGrid
     in
         triangles
-        
 
 -- | This function gives line segmensts to divde negative interior
---  regions and positive exterior ones inside a square, based on its 
+--  regions and positive exterior ones inside a square, based on its
 --  values at its vertices.
 --  It is based on the linearly-interpolated marching squares algorithm.
 
 getSquareTriangles :: ℝ2 -> ℝ2 -> Obj2 -> [(ℝ2,ℝ2,ℝ2)]
-getSquareTriangles (x1, y1) (x2, y2) obj = 
-    let 
+getSquareTriangles (x1, y1) (x2, y2) obj =
+    let
         (x,y) = (x1, y1)
 
         -- Let's evlauate obj at a few points...
@@ -73,43 +72,43 @@ getSquareTriangles (x1, y1) (x2, y2) obj =
              x1y1 <= 0, x2y1 <= 0) of
         -- Yes, there's some symetries that could reduce the amount of code...
         -- But I don't think they're worth exploiting...
-        (True,  True, 
+        (True,  True,
          True,  True)  -> square (x1,y1) (x2,y1) (x2,y2) (x1,y2)
         (False, False,
          False, False) -> []
-        (True,  True, 
-         False, False) -> square midx1 midx2 (x2,y2) (x1,y2) 
+        (True,  True,
+         False, False) -> square midx1 midx2 (x2,y2) (x1,y2)
         (False, False,
-         True,  True)  -> square (x1,y1) (x2,y1) midx2 midx1 
-        (False, True, 
+         True,  True)  -> square (x1,y1) (x2,y1) midx2 midx1
+        (False, True,
          False, True)  -> square midy1 (x2,y1) (x2,y2) midy2
         (True,  False,
          True,  False) -> square (x1,y1) midy1 midy2 (x1,y2)
         (True,  False,
          False, False) -> [((x1,y2), midx1, midy2)]
-        (False, True, 
-         True,  True)  -> 
+        (False, True,
+         True,  True)  ->
             [(midx1, (x1,y1), midy2), ((x1,y1), (x2,y1), midy2), (midy2, (x2,y1), (x2,y2))]
-        (True,  True, 
-         False, True)  -> 
-            [((x1,y2), midx1, (x2,y2)), (midx1, midy1, (x2,y2)), ((x2,y2), midy1, (x2,y1))] 
+        (True,  True,
+         False, True)  ->
+            [((x1,y2), midx1, (x2,y2)), (midx1, midy1, (x2,y2)), ((x2,y2), midy1, (x2,y1))]
         (False, False,
          True,  False) -> [(midx1, (x1,y1), midy1)]
-        (True,  True, 
-         True,  False) -> 
+        (True,  True,
+         True,  False) ->
             [(midy1,midx2,(x2,y2)), ((x2,y2), (x1,y2), midy1), (midy1, (x1,y2), (x1,y1))]
         (False, False,
          False, True)  -> [(midx2, midy1, (x2,y1))]
         (True,  False,
-         True,  True)  -> 
+         True,  True)  ->
             [(midy2, (x2,y1), midx2), ((x2,y1), midy2, (x1,y1)), ((x1,y1), midy2, (x1,y2))]
-        (False, True, 
+        (False, True,
          False, False) -> [(midx2, (x2,y2), midy2)]
         (True,  False,
          False, True)  -> if c > 0
             then [((x1,y2), midx1, midy2), ((x2,y1), midy1, midx2)]
             else [] --[[midx1, midy1], [midx2, midy2]]
-        (False, True, 
+        (False, True,
          True,  False) -> if c <= 0
             then [] --[[midx1, midy2], [midx2, midy1]]
             else [((x1,y1), midy1, midx1), ((x2,y2), midx2, midy2)] --[[midx1, midy1], [midx2, midy2]]

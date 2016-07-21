@@ -4,7 +4,7 @@
 
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts, TypeSynonymInstances, UndecidableInstances #-}
 
-{- The purpose of this file is to pass on the functionality we want 
+{- The purpose of this file is to pass on the functionality we want
    to be accessible to an end user who is compiling objects using
    this haskell library. -}
 
@@ -18,7 +18,6 @@ module Graphics.Implicit(
     union,  intersect,  difference,
     unionR, intersectR, differenceR,
     shell,
-    --slice,
     extrudeR,
     extrudeOnEdgeOf,
     -- Primitives
@@ -28,8 +27,6 @@ module Graphics.Implicit(
     cylinder,
     cylinder2,
     rectR,
-    --regularPolygon,
-    --zsurface,
     polygon,
     -- Export
     writeSVG,
@@ -57,7 +54,7 @@ import Graphics.Implicit.Primitives (translate, scale, complement, union, inters
 import Graphics.Implicit.ExtOpenScad (runOpenscad)
 
 -- Export functions, for writing files based on the result of operations on primitives
-import qualified Graphics.Implicit.Export as Export (writeSVG, writeSTL, writeBinSTL, writeOBJ, writeSCAD2, writeSCAD3, writeTHREEJS, writeGCodeHacklabLaser, writePNG) 
+import qualified Graphics.Implicit.Export as Export (writeSVG, writeSTL, writeBinSTL, writeOBJ, writeSCAD2, writeSCAD3, writeTHREEJS, writeGCodeHacklabLaser, writePNG)
 
 -- Datatypes/classes defining the world, or part of the world.
 import Graphics.Implicit.Definitions (SymbolicObj2, SymbolicObj3, ℝ)
@@ -87,7 +84,7 @@ writeSCAD3 = Export.writeSCAD3
 writeTHREEJS :: ℝ -> FilePath -> SymbolicObj3 -> IO ()
 writeTHREEJS = Export.writeTHREEJS
 
-writeGCodeHacklabLaser :: ℝ -> FilePath -> SymbolicObj2 -> IO () 
+writeGCodeHacklabLaser :: ℝ -> FilePath -> SymbolicObj2 -> IO ()
 writeGCodeHacklabLaser = Export.writeGCodeHacklabLaser
 
 writePNG2 :: ℝ -> FilePath -> SymbolicObj2  -> IO ()

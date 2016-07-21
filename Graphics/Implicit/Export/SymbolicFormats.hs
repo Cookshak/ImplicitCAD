@@ -1,7 +1,7 @@
-{-# LANGUAGE OverloadedStrings #-}
-
 -- Implicit CAD. Copyright (C) 2011, Christopher Olah (chris@colah.ca)
 -- Released under the GNU GPL, see LICENSE
+
+{-# LANGUAGE OverloadedStrings #-}
 
 module Graphics.Implicit.Export.SymbolicFormats where
 
@@ -37,12 +37,11 @@ buildArgs (c1, c2) args = "(" <> (fromLazyText c1) <> mconcat (intersperse "," a
 call      = callToken ("[", "]")
 callNaked = callToken ("",   "")
 
-
 buildS3 :: SymbolicObj3 -> Reader ℝ Builder
 
 buildS3 (Rotate3 (x,y,z) obj) = call "rotate" [bf (rad2deg x), bf (rad2deg y), bf (rad2deg z)] [buildS3 obj]
-  where
-    rad2deg r = r * (180/pi)
+    where
+        rad2deg r = r * (180/pi)
 
 buildS3 (UnionR3 0 objs) = call "union" [] $ map buildS3 objs
 

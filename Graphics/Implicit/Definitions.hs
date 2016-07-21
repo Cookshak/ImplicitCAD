@@ -158,7 +158,7 @@ type BoxedObj3 = Boxed3 Obj3
 --   cases.
 data SymbolicObj2 =
     -- Primitives
-    RectR ℝ ℝ2 ℝ2
+      RectR ℝ ℝ2 ℝ2
     | Circle ℝ
     | PolygonR ℝ [ℝ2]
     -- (Rounded) CSG
@@ -202,7 +202,7 @@ data SymbolicObj3 =
     -- 2D based
     | ExtrudeR ℝ SymbolicObj2 ℝ
     | ExtrudeRotateR ℝ ℝ SymbolicObj2 ℝ
-    | ExtrudeRM 
+    | ExtrudeRM
         ℝ                 -- rounding radius
         (Maybe (ℝ -> ℝ))  -- twist
         (Maybe (ℝ -> ℝ))  -- scale
@@ -236,23 +236,23 @@ xmlErrorOn = unsafePerformIO $ newIORef False
 
 errorMessage :: Int -> String -> IO()
 errorMessage line msg = do
-        useXML <- readIORef xmlErrorOn
-        let
-            msg' = "At line <line>" ++ show line ++ "</line>:" ++ msg
-            -- dropXML inTag (x:xs)
-            dropXML inQuote False ('"':xs) = '"':dropXML (not inQuote) False  xs
-            dropXML True    _     ( x :xs) = x:dropXML True    False  xs
-            dropXML False   False ('<':xs) =   dropXML False   True  xs
-            dropXML False   True  ('>':xs) =   dropXML False   False xs
-            dropXML inQuote True  ( _ :xs) =   dropXML inQuote True  xs
-            dropXML inQuote False ( x :xs) = x:dropXML inQuote False xs
-            dropXML _       _        []    = []
-        if useXML 
-            then putStrLn $ "<error>" ++ msg' ++ "</error>"
-            else putStrLn $ dropXML False False $ msg'
-        return ()
+    useXML <- readIORef xmlErrorOn
+    let
+        msg' = "At line <line>" ++ show line ++ "</line>:" ++ msg
+        -- dropXML inTag (x:xs)
+        dropXML inQuote False ('"':xs) = '"':dropXML (not inQuote) False  xs
+        dropXML True    _     ( x :xs) = x:dropXML True    False  xs
+        dropXML False   False ('<':xs) =   dropXML False   True  xs
+        dropXML False   True  ('>':xs) =   dropXML False   False xs
+        dropXML inQuote True  ( _ :xs) =   dropXML inQuote True  xs
+        dropXML inQuote False ( x :xs) = x:dropXML inQuote False xs
+        dropXML _       _        []    = []
+    if useXML
+        then putStrLn $ "<error>" ++ msg' ++ "</error>"
+        else putStrLn $ dropXML False False $ msg'
+    return ()
 
 -- FIXME: fix this correctly. causes functions passed to objects not to show.
 -- HACK: This needs to be fixed correctly someday
 instance Show (a -> b) where
-        show _ = "<function>"
+    show _ = "<function>"

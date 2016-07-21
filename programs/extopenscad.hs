@@ -104,37 +104,37 @@ guessOutputFormat fileName =
 extOpenScadOpts :: Parser ExtOpenScadOpts
 extOpenScadOpts = ExtOpenScadOpts
     <$> optional (
-          strOption
+      strOption
         (  short 'o'
         <> long "output"
         <> metavar "FILE"
         <> help "Output file name"
         )
-          )
+      )
     <*> optional (
-          option auto
+      option auto
         (  short 'f'
         <> long "format"
         <> metavar "FORMAT"
         <> help "Output format"
         )
-          )
+      )
     <*> optional (
-          option auto
+      option auto
         (  short 'r'
         <> long "resolution"
         <> metavar "RES"
         <> help "Approximation quality (smaller is better)"
         )
-          )
+      )
     <*> switch
         (  long "xml-error"
         <> help "Report XML errors"
         )
     <*> argument str
-            (  metavar "FILE"
-                <> help "Input extended OpenSCAD file"
-                )
+        (  metavar "FILE"
+        <> help "Input extended OpenSCAD file"
+        )
 
 -- Try to look up an output format from a supplied extension.
 readOutputFormat :: String -> Maybe OutputFormat
@@ -143,13 +143,13 @@ readOutputFormat ext = lookup (map toLower ext) formatExtensions
 -- A Read instance for our output format. Used by 'auto' in our command line parser.
 -- Reads a string, and evaluates to the appropriate OutputFormat.
 instance Read OutputFormat where
-     readsPrec _ myvalue =
+    readsPrec _ myvalue =
         tryParse formatExtensions
         where tryParse [] = []    -- If there is nothing left to try, fail
               tryParse ((attempt, result):xs) =
-                                 if (take (length attempt) myvalue) == attempt
-                                   then [(result, drop (length attempt) myvalue)]
-                                   else tryParse xs
+                  if (take (length attempt) myvalue) == attempt
+                  then [(result, drop (length attempt) myvalue)]
+                  else tryParse xs
 
 -- Find the resolution to raytrace at.
 getRes :: (Map.Map [Char] OVal, [SymbolicObj2], [SymbolicObj3]) -> ℝ
@@ -225,8 +225,8 @@ run args = do
             case (obj2s, obj3s) of
                 ([], [obj]) -> do
                     let output = fromMaybe
-                                    (basename ++ "." ++ fromMaybe "stl" posDefExt)
-                                    (outputFile args)
+                                     (basename ++ "." ++ fromMaybe "stl" posDefExt)
+                                     (outputFile args)
                     putStrLn $ "Rendering 3D object to " ++ output
                     putStrLn $ "With resolution " ++ show res
                     putStrLn $ "In box " ++ show (getBox3 obj)
@@ -234,8 +234,8 @@ run args = do
                     export3 format res output obj
                 ([obj], []) -> do
                     let output = fromMaybe
-                                    (basename ++ "." ++ fromMaybe "svg" posDefExt)
-                                    (outputFile args)
+                                     (basename ++ "." ++ fromMaybe "svg" posDefExt)
+                                     (outputFile args)
                     putStrLn $ "Rendering 2D object to " ++ output
                     putStrLn $ "With resolution " ++ show res
                     putStrLn $ "In box " ++ show (getBox2 obj)
@@ -247,9 +247,9 @@ run args = do
 -- The entry point. Use the option parser then run the extended OpenScad code.
 main :: IO()
 main = execParser opts >>= run
-       where
-         opts= info (helper <*> extOpenScadOpts)
-           ( fullDesc
-                 <> progDesc "ImplicitCAD: Extended OpenSCAD interpreter." 
-                 <> header "extopenscad - Extended OpenSCAD"
-               )
+    where
+        opts= info (helper <*> extOpenScadOpts)
+              ( fullDesc
+              <> progDesc "ImplicitCAD: Extended OpenSCAD interpreter." 
+              <> header "extopenscad - Extended OpenSCAD"
+              )

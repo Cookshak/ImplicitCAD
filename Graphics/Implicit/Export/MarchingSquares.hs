@@ -40,7 +40,7 @@ getContour p1 p2 d obj =
 -- FIXME: Commented out, not used?
 {-
 getContour2 :: ℝ2 -> ℝ2 -> ℝ2 -> Obj2 -> [Polyline]
-getContour2 p1@(x1, y1) p2@(x2, y2) d obj = 
+getContour2 p1@(x1, y1) p2@(x2, y2) d obj =
     let
         -- How many steps will we take on each axis?
         n@(nx,ny) = (fromIntegral . ceiling) `both` ((p2 ^-^ p1) ⋯/ d)
@@ -66,13 +66,13 @@ getContour2 p1@(x1, y1) p2@(x2, y2) d obj =
 -}
 
 -- | This function gives line segments to divide negative interior
---  regions and positive exterior ones inside a square, based on its 
+--  regions and positive exterior ones inside a square, based on its
 --  values at its vertices.
 --  It is based on the linearly-interpolated marching squares algorithm.
 
 getSquareLineSegs :: ℝ2 -> ℝ2 -> Obj2 -> [Polyline]
 getSquareLineSegs (x1, y1) (x2, y2) obj =
-    let 
+    let
         (x,y) = (x1, y1)
 
         -- Let's evlauate obj at a few points...
@@ -107,39 +107,39 @@ getSquareLineSegs (x1, y1) (x2, y2) obj =
                                      x1y1 <= 0, x2y1 <= 0) of
         -- Yes, there's some symetries that could reduce the amount of code...
         -- But I don't think they're worth exploiting...
-        (True,  True, 
+        (True,  True,
          True,  True)  -> []
         (False, False,
          False, False) -> []
-        (True,  True, 
+        (True,  True,
          False, False) -> [[midx1, midx2]]
         (False, False,
          True,  True)  -> [[midx1, midx2]]
-        (False, True, 
+        (False, True,
          False, True)  -> [[midy1, midy2]]
         (True,  False,
          True,  False) -> [[midy1, midy2]]
         (True,  False,
          False, False) -> [[midx1, midy2]]
-        (False, True, 
+        (False, True,
          True,  True)  -> [[midx1, midy2]]
-        (True,  True, 
+        (True,  True,
          False, True)  -> [[midx1, midy1]]
         (False, False,
          True,  False) -> [[midx1, midy1]]
-        (True,  True, 
+        (True,  True,
          True,  False) -> [[midx2, midy1]]
         (False, False,
          False, True)  -> [[midx2, midy1]]
         (True,  False,
          True,  True)  -> [[midx2, midy2]]
-        (False, True, 
+        (False, True,
          False, False) -> [[midx2, midy2]]
         (True,  False,
          False, True)  -> if c > 0
             then [[midx1, midy2], [midx2, midy1]]
             else [[midx1, midy1], [midx2, midy2]]
-        (False, True, 
+        (False, True,
          True,  False) -> if c <= 0
             then [[midx1, midy2], [midx2, midy1]]
             else [[midx1, midy1], [midx2, midy2]]
@@ -164,13 +164,14 @@ orderLines (present:remaining) =
             (Nothing, _) -> present:(orderLines remaining)
             (Just match, others) -> orderLines $ (present ++ tail match): others
 
-reducePolyline ((x1,y1):(x2,y2):(x3,y3):others) = 
+-- FIXME: magic number?
+reducePolyline ((x1,y1):(x2,y2):(x3,y3):others) =
     if (x1,y1) == (x2,y2) then reducePolyline ((x2,y2):(x3,y3):others) else
-    if abs ( (y2-y1)/(x2-x1) - (y3-y1)/(x3-x1) ) < 0.0001 
+    if abs ( (y2-y1)/(x2-x1) - (y3-y1)/(x3-x1) ) < 0.0001
        || ( (x2-x1) == 0 && (x3-x1) == 0 && (y2-y1)*(y3-y1) > 0)
     then reducePolyline ((x1,y1):(x3,y3):others)
     else (x1,y1) : reducePolyline ((x2,y2):(x3,y3):others)
-reducePolyline ((x1,y1):(x2,y2):others) = 
+reducePolyline ((x1,y1):(x2,y2):others) =
     if (x1,y1) == (x2,y2) then reducePolyline ((x2,y2):others) else (x1,y1):(x2,y2):others
 reducePolyline l = l
 
@@ -199,13 +200,13 @@ orderLinesP segs =
     in
         if (length segs < 5 || length (head segs) < 5 ) then concat $ concat segs else
         case (\(x,y) -> (halve x, halve y)) $ unzip $ map (halve) segs of
-            ((a,b),(c,d)) -> orderLines $ 
+            ((a,b),(c,d)) -> orderLines $
                 let
                     a' = orderLinesP a
                     b' = orderLinesP b
                     c' = orderLinesP c
                     d' = orderLinesP d
-                in (force a' `par` force b' `par` force c' `par` force d') `pseq` 
+                in (force a' `par` force b' `par` force c' `par` force d') `pseq`
                     (a' ++ b' ++ c' ++ d')
 -}
 

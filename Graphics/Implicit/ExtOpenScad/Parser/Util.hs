@@ -4,8 +4,8 @@ import Text.ParserCombinators.Parsec  hiding (State)
 import Graphics.Implicit.ExtOpenScad.Definitions
 
 -- white space, including tabs, newlines and comments
-genSpace = many $ 
-    oneOf " \t\n\r" 
+genSpace = many $
+    oneOf " \t\n\r"
     <|> (try $ do
         _ <- string "//"
         _ <- many ( noneOf "\n")
@@ -52,7 +52,7 @@ variableSymb = many1 (noneOf " ,|[]{}()+-*&^%#@!~`'\"\\/;:.,<>?=") <?> "variable
 
 patternMatcher :: GenParser Char st Pattern
 patternMatcher =
-    (do 
+    (do
         _ <- char '_'
         return Wild
     ) <|> {-( do
@@ -72,4 +72,3 @@ patternMatcher =
         _ <- char ']'
         return $ ListP components
     )
-

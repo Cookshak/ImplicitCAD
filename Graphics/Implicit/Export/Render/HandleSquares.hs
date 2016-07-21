@@ -7,7 +7,7 @@ import Graphics.Implicit.Definitions
 import Graphics.Implicit.Export.Render.Definitions
 import GHC.Exts (groupWith)
 import Data.List (sortBy)
-import Data.VectorSpace       
+import Data.VectorSpace
 
 -- We want small meshes. Essential to this, is getting rid of triangles.
 -- We secifically mark quads in tesselation (refer to Graphics.Implicit.
@@ -16,36 +16,36 @@ import Data.VectorSpace
 
 {- Core idea of mergedSquareTris:
 
-  Many Quads on Plane 
-   ____________ 
+  Many Quads on Plane
+   ____________
   |    |    |  |
   |____|____|  |
   |____|____|__|
 
    | joinXaligned
-   v 
-   ____________ 
+   v
+   ____________
   |         |  |
   |_________|__|
   |_________|__|
 
    | joinYaligned
-   v 
-   ____________ 
+   v
+   ____________
   |         |  |
   |         |  |
   |_________|__|
 
    | joinXaligned (presently disabled)
-   v 
-   ____________ 
+   v
+   ____________
   |            |
   |            |
   |____________|
 
    | squareToTri
-   v 
-   ____________ 
+   v
+   ____________
   |\           |
   | ---------- |
   |___________\|
@@ -53,12 +53,12 @@ import Data.VectorSpace
 -}
 
 mergedSquareTris :: [TriSquare] -> [Triangle]
-mergedSquareTris sqTris = 
+mergedSquareTris sqTris =
     let
         -- We don't need to do any work on triangles. They'll just be part of
         -- the list of triangles we give back. So, the triangles coming from
         -- triangles...
-        triTriangles = concat $ map (\(Tris a) -> a) $ filter isTris sqTris 
+        triTriangles = concat $ map (\(Tris a) -> a) $ filter isTris sqTris
         -- We actually want to work on the quads, so we find those
         squares = filter (not . isTris) sqTris
         -- Collect ones that are on the same plane.
@@ -66,17 +66,18 @@ mergedSquareTris sqTris =
         -- For each plane:
         -- Select for being the same range on X and then merge them on Y
         -- Then vice versa.
-        joined = map 
+        joined = map
             ( -- concat . (map joinXaligned) . groupWith (\(Sq _ _ xS _) -> xS)
               concat . (map joinYaligned) . groupWith (\(Sq _ _ _ yS) -> yS)
-            . concat . (map joinXaligned) . groupWith (\(Sq _ _ xS _) -> xS)) 
+            . concat . (map joinXaligned) . groupWith (\(Sq _ _ xS _) -> xS))
             planeAligned
         -- Merge them back together, and we have the desired reult!
         finishedSquares = concat joined
     in
-        -- merge them to triangles, and combine with the original triagneles.
-        triTriangles ++ concat (map squareToTri finishedSquares)
-
+        -- merge them to triangles, and combine with the original triangles.
+        -- Disable square merging temporarily.
+        --triTriangles ++ concat (map squareToTri finishedSquares)
+        triTriangles ++ concat (map squareToTri squares)
 
 -- And now for a bunch of helper functions that do the heavy lifting...
 
@@ -88,7 +89,7 @@ isTris _ = False
 joinXaligned :: [TriSquare] -> [TriSquare]
 joinXaligned quads@((Sq b z xS _):_) =
     let
-        orderedQuads = sortBy 
+        orderedQuads = sortBy
             (\(Sq _ _ _ (ya,_)) (Sq _ _ _ (yb,_)) -> compare ya yb)
             quads
         mergeAdjacent (pres@(Sq _ _ _ (y1a,y2a)) : next@(Sq _ _ _ (y1b,y2b)) : others) =
@@ -105,7 +106,7 @@ joinXaligned [] = []
 joinYaligned :: [TriSquare] -> [TriSquare]
 joinYaligned quads@((Sq b z _ yS):_) =
     let
-        orderedQuads = sortBy 
+        orderedQuads = sortBy
             (\(Sq _ _ (xa,_) _) (Sq _ _ (xb,_) _) -> compare xa xb)
             quads
         mergeAdjacent (pres@(Sq _ _ (x1a,x2a) _) : next@(Sq _ _ (x1b,x2b) _) : others) =

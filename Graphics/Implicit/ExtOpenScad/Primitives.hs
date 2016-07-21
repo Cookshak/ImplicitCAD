@@ -4,7 +4,7 @@
 -- We'd like to parse openscad code, with some improvements, for backwards compatability.
 
 -- This file provides primitive objects for the openscad parser.
--- The code is fairly straightforward; an explanation of how 
+-- The code is fairly straightforward; an explanation of how
 -- the first one works is provided.
 
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts, TypeSynonymInstances, UndecidableInstances, ScopedTypeVariables #-}
@@ -20,7 +20,7 @@ import qualified Graphics.Implicit.Primitives as Prim
 import Data.Maybe (isNothing)
 import qualified Data.Either as Either
 import qualified Control.Monad as Monad
-       
+
 import Data.VectorSpace
 
 primitives :: [(String, [OVal] -> ArgParser (IO [OVal]) )]
@@ -38,7 +38,7 @@ sphere = moduleWithoutSuite "sphere" $ do
     -- The radius, r, which is a (real) number.
     -- Because we don't provide a default, this ends right
     -- here if it doesn't get a suitable argument!
-    r :: ℝ <- argument "r" 
+    r :: ℝ <- argument "r"
                 `doc` "radius of the sphere"
     -- So what does this module do?
     -- It adds a 3D object, a sphere of radius r,
@@ -62,23 +62,24 @@ cube = moduleWithoutSuite "cube" $ do
                 `doc` "y or y-interval"
             z :: Either ℝ ℝ2 <- argument "z"
                 `doc` "z or z-interval"
-            center :: Bool <- argument "center" 
-                `doc` "should center? (non-intervals)"  
+            center :: Bool <- argument "center"
+                `doc` "should center? (non-intervals)"
                 `defaultTo` False
-            return (either (toInterval center) id x,
-                    either (toInterval center) id y,
-                    either (toInterval center) id z)
+            let toInterval' = toInterval center
+            return (either toInterval' id x,
+                    either toInterval' id y,
+                    either toInterval' id z)
         <|> do
             size   :: Either ℝ ℝ3  <- argument "size"
                 `doc`  "square size"
-            center :: Bool <- argument "center" 
-                `doc` "should center?"  
+            center :: Bool <- argument "center"
+                `doc` "should center?"
                 `defaultTo` False
             let (x,y, z) = either (\w -> (w,w,w)) id size
             return (toInterval center x, toInterval center y, toInterval center z)
 
     r      :: ℝ    <- argument "r"
-                        `doc` "radius of rounding" 
+                        `doc` "radius of rounding"
                         `defaultTo` 0
 
     -- Tests
@@ -89,13 +90,10 @@ cube = moduleWithoutSuite "cube" $ do
 
     addObj3 $ Prim.rect3R r (x1, y1, z1) (x2, y2, z2)
 
-
-
-
 square :: ([Char], [OVal] -> ArgParser (IO [OVal]))
 square = moduleWithoutSuite "square" $ do
 
-    -- examples 
+    -- examples
     example "square(x=[-2,2], y=[-1,5]);"
     example "square(size = [3,4], center = true, r = 0.5);"
     example "square(4);"
@@ -107,22 +105,23 @@ square = moduleWithoutSuite "square" $ do
                 `doc` "x or x-interval"
             y :: Either ℝ ℝ2 <- argument "y"
                 `doc` "y or y-interval"
-            center :: Bool <- argument "center" 
-                `doc` "should center? (non-intervals)"  
+            center :: Bool <- argument "center"
+                `doc` "should center? (non-intervals)"
                 `defaultTo` False
-            return (either (toInterval center) id x,
-                    either (toInterval center) id y)
+            let toInterval' = toInterval center
+            return (either toInterval' id x,
+                    either toInterval' id y)
         <|> do
             size   :: Either ℝ ℝ2  <- argument "size"
                 `doc`  "square size"
-            center :: Bool <- argument "center" 
-                `doc` "should center?"  
+            center :: Bool <- argument "center"
+                `doc` "should center?"
                 `defaultTo` False
             let (x,y) = either (\w -> (w,w)) id size
             return (toInterval center x, toInterval center y)
 
     r      :: ℝ    <- argument "r"
-                        `doc` "radius of rounding" 
+                        `doc` "radius of rounding"
                         `defaultTo` 0
 
     -- Tests
@@ -132,8 +131,6 @@ square = moduleWithoutSuite "square" $ do
         `eulerCharacteristic` 0
 
     addObj2 $ Prim.rectR r (x1, y1) (x2, y2)
-
-
 
 cylinder :: ([Char], [OVal] -> ArgParser (IO [OVal]))
 cylinder = moduleWithoutSuite "cylinder" $ do
@@ -173,12 +170,12 @@ cylinder = moduleWithoutSuite "cylinder" $ do
         dh = h2 - h1
         shift = if h1 == 0 then id else Prim.translate (0,0,h1)
 
-    -- The result is a computation state modifier that adds a 3D object, 
+    -- The result is a computation state modifier that adds a 3D object,
     -- based on the args.
     addObj3 $ if r1 == 1 && r2 == 1
         then let
             obj2 = if fn  < 0 then Prim.circle r else Prim.polygonR 0 $
-                let sides = fromIntegral fn 
+                let sides = fromIntegral fn
                 in [(r*cos θ, r*sin θ )| θ <- [2*pi*n/sides | n <- [0.0 .. sides - 1.0]]]
             obj3 = Prim.extrudeR 0 obj2 dh
         in shift obj3
@@ -193,7 +190,7 @@ circle = moduleWithoutSuite "circle" $ do
     -- Arguments
     r  :: ℝ <- argument "r"
         `doc` "radius of the circle"
-    fn :: ℕ <- argument "$fn" 
+    fn :: ℕ <- argument "$fn"
         `doc` "if defined, makes a regular polygon with n sides instead of a circle"
         `defaultTo` (-1)
 
@@ -203,7 +200,7 @@ circle = moduleWithoutSuite "circle" $ do
     addObj2 $ if fn < 3
         then Prim.circle r
         else Prim.polygonR 0 $
-            let sides = fromIntegral fn 
+            let sides = fromIntegral fn
             in [(r*cos θ, r*sin θ )| θ <- [2*pi*n/sides | n <- [0.0 .. sides - 1.0]]]
 
 polygon :: ([Char], [OVal] -> ArgParser (IO [OVal]))
@@ -211,9 +208,9 @@ polygon = moduleWithoutSuite "polygon" $ do
     
     example "polygon ([(0,0), (0,10), (10,0)]);"
     
-    points :: [ℝ2] <-  argument "points" 
+    points :: [ℝ2] <-  argument "points"
                         `doc` "vertices of the polygon"
-    paths :: [ℕ ]  <- argument "paths" 
+    paths :: [ℕ ]  <- argument "paths"
                         `doc` "order to go through vertices; ignored for now"
                         `defaultTo` []
     r      :: ℝ     <- argument "r"
@@ -257,7 +254,7 @@ translate = moduleWithSuite "translate" $ \children -> do
     example "translate ([2,3]) circle (4);"
     example "translate ([5,6,7]) sphere(5);"
 
-    (x,y,z) <- 
+    (x,y,z) <-
         do
             x :: ℝ <- argument "x"
                 `doc` "x amount to translate";
@@ -275,7 +272,7 @@ translate = moduleWithSuite "translate" $ \children -> do
                 Right (Left  (x,y)  ) -> (x,y,0)
                 Right (Right (x,y,z)) -> (x,y,z)
     
-    return $ return $ 
+    return $ return $
         objMap (Prim.translate (x,y)) (Prim.translate (x,y,z)) children
 
 deg2rad :: Floating a => a -> a
@@ -302,7 +299,6 @@ rotate = moduleWithSuite "rotate" $ \children -> do
             objMap id (Prim.rotate3 (deg2rad yz, deg2rad zx, 0)) children
         ) <||> const []
 
-
 scale :: ([Char], [OVal] -> ArgParser (IO [OVal]))
 scale = moduleWithSuite "scale" $ \children -> do
 
@@ -314,7 +310,7 @@ scale = moduleWithSuite "scale" $ \children -> do
         `doc` "vector or scalar to scale by"
     
     let
-        scaleObjs strech2 strech3 = 
+        scaleObjs strech2 strech3 =
             objMap (Prim.scale strech2) (Prim.scale strech3) children
     
     return $ return $ case v of
@@ -352,7 +348,7 @@ extrude = moduleWithSuite "linear_extrude" $ \children -> do
             if center
             then Prim.translate (0,0,-heightn/2.0)
             else id
-        
+
         funcify :: (VectorSpace a, Fractional (Scalar a)) => Either a (ℝ -> a) -> ℝ -> a
         funcify (Left val) h = realToFrac (h/heightn) *^ val
         funcify (Right f ) h = f h
@@ -365,7 +361,7 @@ extrude = moduleWithSuite "linear_extrude" $ \children -> do
         \obj -> case height of
             Left constHeight | isNothing twist && isNothing scaleArg && isNothing translateArg ->
                 shiftAsNeeded $ Prim.extrudeR r obj constHeight
-            _ -> 
+            _ ->
                 shiftAsNeeded $ Prim.extrudeRM r twist' scale' translate' obj height'
         ) children
 
@@ -375,18 +371,18 @@ rotateExtrude = moduleWithSuite "rotate_extrude" $ \children -> do
 
     totalRot :: ℝ <- argument "a" `defaultTo` 360
         `doc` "angle to sweep"
-    r        :: ℝ    <- argument "r"   `defaultTo` 0
+    r            :: ℝ    <- argument "r"   `defaultTo` 0
     translateArg :: Either ℝ2 (ℝ -> ℝ2) <- argument "translate" `defaultTo` Left (0,0)
-    rotateArg :: Either ℝ  (ℝ -> ℝ ) <- argument "rotate" `defaultTo` Left 0
+    rotateArg    :: Either ℝ  (ℝ -> ℝ ) <- argument "rotate" `defaultTo` Left 0
 
     let
         is360m n = 360 * fromIntegral (round $ n / 360) /= n
         n = fromIntegral $ round $ totalRot / 360
-        cap = is360m totalRot 
-            || Either.either ( /= (0,0)) (\f -> f 0 /= f totalRot) translateArg
-            || Either.either is360m (\f -> is360m (f 0 - f totalRot)) rotateArg
+        cap = is360m totalRot
+            || (Either.either ( /= (0,0)) (\f -> f 0 /= f totalRot) ) translateArg
+            || (Either.either (is360m) (\f -> is360m (f 0 - f totalRot)) ) rotateArg
         capM = if cap then Just r else Nothing
-    
+
     return $ return $ obj2UpMap (Prim.rotateExtrude totalRot capM translateArg rotateArg) children
 
 
@@ -396,14 +392,14 @@ rotateExtrude = moduleWithSuite "rotate_extrude" $ \children -> do
     center <- boolArgumentWithDefault "center" False
     twist <- realArgumentWithDefault 0.0
     r <- realArgumentWithDefault "r" 0.0
-    getAndModUpObj2s suite (\obj -> Prim.extrudeRMod r (\θ (x,y) -> (x*cos(θ)+y*sin(θ), y*cos(θ)-x*sin(θ)) )  obj h) 
+    getAndModUpObj2s suite (\obj -> Prim.extrudeRMod r (\θ (x,y) -> (x*cos(θ)+y*sin(θ), y*cos(θ)-x*sin(θ)) )  obj h)
 -}
 
 shell :: ([Char], [OVal] -> ArgParser (IO [OVal]))
 shell = moduleWithSuite "shell" $ \children-> do
     w :: ℝ <- argument "w"
             `doc` "width of the shell..."
-    
+
     return $ return $ objMap (Prim.shell w) (Prim.shell w) children
 
 -- Not a perenant solution! Breaks if can't pack.
@@ -424,12 +420,12 @@ pack = moduleWithSuite "pack" $ \children -> do
         in if not $ null obj3s
             then case Prim.pack3 size sep obj3s of
                 Just solution -> return $ OObj3 solution : (map OObj2 obj2s ++ others)
-                Nothing       -> do 
+                Nothing       -> do
                     putStrLn "Can't pack given objects in given box with present algorithm"
                     return children
             else case Prim.pack2 size sep obj2s of
                 Just solution -> return $ OObj2 solution : others
-                Nothing       -> do 
+                Nothing       -> do
                     putStrLn "Can't pack given objects in given box with present algorithm"
                     return children
 
@@ -442,7 +438,7 @@ unit = moduleWithSuite "unit" $ \children -> do
     unitName :: String <- argument "unit"
         `doc` "the unit you wish to work in"
 
-    let 
+    let
         mmRatio "inch" = Just 25.4
         mmRatio "in"   = mmRatio "inch"
         mmRatio "foot" = Just 304.8
@@ -464,7 +460,7 @@ unit = moduleWithSuite "unit" $ \children -> do
         Nothing -> do
             putStrLn $ "unrecognized unit " ++ unitName
             return children
-        Just r  -> 
+        Just r  ->
             return $ objMap (Prim.scale (r,r)) (Prim.scale (r,r,r)) children
 
 
@@ -475,7 +471,6 @@ unit = moduleWithSuite "unit" $ \children -> do
 
 moduleWithSuite :: t -> t1 -> (t, t1)
 moduleWithSuite name modArgMapper = (name, modArgMapper)
-
 moduleWithoutSuite :: t -> a -> (t, b -> a)
 moduleWithoutSuite name modArgMapper = (name, const modArgMapper)
 
@@ -492,8 +487,7 @@ objMap obj2mod obj3mod (x:xs) = case x of
     a          -> a                    : objMap obj2mod obj3mod xs
 objMap _ _ [] = []
 
-objReduce :: ([SymbolicObj2] -> SymbolicObj2)
-                   -> ([SymbolicObj3] -> SymbolicObj3) -> [OVal] -> [OVal]
+objReduce :: ([SymbolicObj2] -> SymbolicObj2) -> ([SymbolicObj3] -> SymbolicObj3) -> [OVal] -> [OVal]
 objReduce obj2reduce obj3reduce l = case divideObjs l of
     (   [],    [], others) ->                                                       others
     (   [], obj3s, others) ->                            OObj3 (obj3reduce obj3s) : others
@@ -507,7 +501,7 @@ obj2UpMap obj2upmod (x:xs) = case x of
 obj2UpMap _ [] = []
 
 toInterval :: Fractional t => Bool -> t -> (t, t)
-toInterval center h = 
+toInterval center h =
     if center
     then (-h/2, h/2)
     else (0, h)

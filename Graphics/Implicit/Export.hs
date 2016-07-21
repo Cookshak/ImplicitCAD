@@ -2,6 +2,7 @@
 -- Copyright (C) 2014 2015, Julia Longtin (julial@turinglace.com)
 -- Copyright (C) 2015 2016, Mike MacHenry (mike.machenry@gmail.com)
 -- Released under the GNU GPL, see LICENSE
+
 {-# LANGUAGE FlexibleContexts #-}
 
 module Graphics.Implicit.Export where
@@ -43,8 +44,7 @@ writeObject res format filename obj =
     in LT.writeFile filename aprox
 
 -- Write an object using the given format writer.
-writeObject'
-    :: (DiscreteAproxable obj aprox)
+writeObject' :: (DiscreteAproxable obj aprox)
     => ℝ                -- ^ Resolution
     -> (FilePath -> aprox -> IO ())  -- ^ File Format writer
     -> FilePath         -- ^ File Name

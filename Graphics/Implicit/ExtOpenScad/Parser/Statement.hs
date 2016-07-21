@@ -14,7 +14,7 @@ parseProgram name s = parse program name s where
 
 -- | A  in our programming openscad-like programming language.
 computation :: GenParser Char st StatementI
-computation = 
+computation =
     do -- suite statements: no semicolon...
         _ <- genSpace
         s <- tryMany [
@@ -68,7 +68,7 @@ computation =
 --  So this parses them.
 -}
 suite :: GenParser Char st [StatementI]
-suite = (fmap return computation <|> do 
+suite = (fmap return computation <|> do
     _ <- char '{'
     _ <- genSpace
     stmts <- many (try computation)
@@ -115,7 +115,6 @@ function = ("function " ?:) $
     do
         line <- lineNumber
         varSymb <- (string "function" >> space >> genSpace >> variableSymb)
-                   *<|> variableSymb
         _ <- stringGS " ( "
         argVars <- sepBy patternMatcher (stringGS " , ")
         _ <- stringGS " ) = "
@@ -132,7 +131,7 @@ echo = do
     return $ StatementI line $ Echo exprs
 
 ifStatementI :: GenParser Char st StatementI
-ifStatementI = 
+ifStatementI =
     "if " ?: do
         line <- lineNumber
         _ <- stringGS "if ( "
@@ -186,7 +185,7 @@ userModuleDeclaration = do
 moduleArgsUnit :: GenParser Char st [(Maybe String, Expr)]
 moduleArgsUnit = do
     _ <- stringGS " ( "
-    args <- sepBy ( 
+    args <- sepBy (
         do
             -- eg. a = 12
             symb <- variableSymb

@@ -1,7 +1,10 @@
 -- Implicit CAD. Copyright (C) 2011, Christopher Olah (chris@colah.ca)
+-- Copyright (C) 2014 2015, Julia Longtin (julial@turinglace.com)
 -- Released under the GNU GPL, see LICENSE
 
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, FlexibleContexts, TypeSynonymInstances, UndecidableInstances, NoMonomorphismRestriction #-}
+
+-- A module exporting all of the primitives, and some operations on them.
 
 module Graphics.Implicit.Primitives where
 
@@ -14,6 +17,7 @@ import Graphics.Implicit.ObjectUtil (getBox2, getBox3, getImplicit2, getImplicit
 sphere ::
     ℝ                  -- ^ Radius of the sphere
     -> SymbolicObj3    -- ^ Resulting sphere
+
 sphere = Sphere
 
 rect3R ::
@@ -25,7 +29,7 @@ rect3R ::
 rect3R = Rect3R
 
 cylinder2 ::
-    ℝ                   -- ^ Radius of the cylinder 
+    ℝ                   -- ^ Radius of the cylinder
     -> ℝ                -- ^ Second radius of the cylinder
     -> ℝ                -- ^ Height of the cylinder
     -> SymbolicObj3     -- ^ Resulting cylinder
@@ -55,6 +59,7 @@ polygonR ::
     ℝ                -- ^ Rouding of the polygon
     -> [ℝ2]          -- ^ Verticies of the polygon
     -> SymbolicObj2  -- ^ Resulting polygon
+
 polygonR = PolygonR
 
 polygon :: [ℝ2] -> SymbolicObj2
@@ -64,64 +69,64 @@ polygon = polygonR 0
 
 class Object obj vec | obj -> vec where
     
-    -- | Translate an object by a vector of appropriate dimension. 
-    translate :: 
+    -- | Translate an object by a vector of appropriate dimension.
+    translate ::
         vec      -- ^ Vector to translate by (Also: a is a vector, blah, blah)
         -> obj   -- ^ Object to translate
         -> obj   -- ^ Resulting object
 
     -- | Scale an object
-    scale :: 
+    scale ::
         vec     -- ^ Amount to scale by
         -> obj  -- ^ Object to scale
-        -> obj  -- ^ Resulting scaled object    
+        -> obj  -- ^ Resulting scaled object
     
     -- | Complement an Object
-    complement :: 
+    complement ::
         obj     -- ^ Object to complement
         -> obj  -- ^ Result
     
     -- | Rounded union
-    unionR :: 
+    unionR ::
         ℝ        -- ^ The radius of rounding
         -> [obj] -- ^ objects to union
         -> obj   -- ^ Resulting object
     
     -- | Rounded minimum
-    intersectR :: 
+    intersectR ::
         ℝ        -- ^ The radius of rounding
         -> [obj] -- ^ Objects to intersect
         -> obj   -- ^ Resulting object
     
     -- | Rounded difference
-    differenceR :: 
+    differenceR ::
         ℝ        -- ^ The radius of rounding
-        -> [obj] -- ^ Objects to difference 
+        -> [obj] -- ^ Objects to difference
         -> obj   -- ^ Resulting object
 
     -- | Outset an object.
-    outset :: 
+    outset ::
         ℝ        -- ^ distance to outset
         -> obj   -- ^ object to outset
         -> obj   -- ^ resulting object
 
     -- | Make a shell of an object.
-    shell :: 
+    shell ::
         ℝ        -- ^ width of shell
         -> obj   -- ^ object to take shell of
         -> obj   -- ^ resulting shell
 
     -- | Get the bounding box an object
-    getBox :: 
+    getBox ::
         obj           -- ^ Object to get box of
         -> (vec, vec) -- ^ Bounding box
 
     -- | Get the implicit function for an object
-    getImplicit :: 
+    getImplicit ::
         obj           -- ^ Object to get implicit function of
         -> (vec -> ℝ) -- ^ Implicit function
 
-    implicit :: 
+    implicit ::
         (vec -> ℝ)     -- ^ Implicit function
         -> (vec, vec)  -- ^ Bounding box
         -> obj         -- ^ Resulting object
@@ -192,7 +197,7 @@ rotate3V = Rotate3V
 
 
 pack3 :: ℝ2 -> ℝ -> [SymbolicObj3] -> Maybe SymbolicObj3
-pack3 (dx, dy) sep objs = 
+pack3 (dx, dy) sep objs =
     let
         boxDropZ ((a,b,_),(d,e,_)) = ((a,b),(d,e))
         withBoxes :: [(Box2, SymbolicObj3)]
@@ -200,7 +205,7 @@ pack3 (dx, dy) sep objs =
     in case pack ((0,0),(dx,dy)) sep withBoxes of
             (a, []) -> Just $ union $ map (\((x,y),obj) -> translate (x,y,0) obj) a
             _ -> Nothing
-                
+
 
 -- 2D operations
 
@@ -209,7 +214,7 @@ rotate = Rotate2
 
 
 pack2 :: ℝ2 -> ℝ -> [SymbolicObj2] -> Maybe SymbolicObj2
-pack2 (dx, dy) sep objs = 
+pack2 (dx, dy) sep objs =
     let
         withBoxes :: [(Box2, SymbolicObj2)]
         withBoxes = map (\obj -> ( getBox2 obj, obj)) objs

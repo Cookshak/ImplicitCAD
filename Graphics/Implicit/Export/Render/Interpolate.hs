@@ -23,7 +23,7 @@ import Graphics.Implicit.Definitions
 -- We are also given the values of f at a and b: aval and bval.
 
 -- Additionaly, we get f (continuous and differentiable almost everywhere),
--- and the resolution of the object (so that we can make decisions about 
+-- and the resolution of the object (so that we can make decisions about
 -- how precise we need to be).
 
 -- While the output will never be used, interpolate will be called
@@ -67,7 +67,7 @@ interpolate _ (b, 0) _ _  = b
 -- at it (shrink domain to guess within fromm (a,b) to (a',b'))
 -- :)
 
-{-interpolate (a,aval) (b,bval) f res = 
+{-interpolate (a,aval) (b,bval) f res =
     let
         -- a' and b' are just a and b shifted inwards slightly.
         a' = (a*95+5*b)/100
@@ -116,7 +116,7 @@ interpolate (a,aval) (b,bval) f _ =
 -- Try the answer linear interpolation gives us...
 -- (n is to cut us off if recursion goes too deep)
 
-interpolate_lin n (a, aval) (b, bval) obj | aval /= bval= 
+interpolate_lin n (a, aval) (b, bval) obj | aval /= bval=
     let
         -- Interpolate and evaluate
         mid = a + (b-a)*aval/(aval-bval)
@@ -126,7 +126,7 @@ interpolate_lin n (a, aval) (b, bval) obj | aval /= bval=
     then mid
     -- 
     else let
-        (a', a'val, b', b'val, improveRatio) = 
+        (a', a'val, b', b'val, improveRatio) =
             if midval > 0
                 then (mid, midval, b, bval, midval/aval)
                 else (a, aval, mid, midval, midval/bval)
@@ -140,7 +140,7 @@ interpolate_lin n (a, aval) (b, bval) obj | aval /= bval=
     in if improveRatio < 0.3 && n < 4
     -- And we continue on.
     then interpolate_lin (n+1) (a', a'val) (b', b'val) obj
-    -- But if not, we switch to binary interpolate, which is 
+    -- But if not, we switch to binary interpolate, which is
     -- immune to this problem
     else interpolate_bin (n+1) (a', a'val) (b', b'val) obj
 

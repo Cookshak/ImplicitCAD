@@ -1,4 +1,5 @@
 -- Implicit CAD. Copyright (C) 2011, Christopher Olah (chris@colah.ca)
+-- Copyright 2014 2015 2016, Julia Longtin (julial@turinglace.com)
 -- Copyright 2015 2016, Mike MacHenry (mike.machenry@gmail.com)
 -- Released under the GNU GPL, see LICENSE
 
@@ -31,7 +32,7 @@ getBox3 (Cylinder h r1 r2) = ( (-r,-r,0), (r,r,h) ) where r = max r1 r2
 getBox3 (Complement3 _) =
     ((-infty, -infty, -infty), (infty, infty, infty)) where infty = 1/0
 getBox3 (UnionR3 r symbObjs) = ((left-r,bot-r,inward-r), (right+r,top+r,out+r))
-    where 
+    where
         boxes = map getBox3 symbObjs
         (leftbot, topright) = unzip $ filter (not.isEmpty) boxes
         (lefts, bots, ins) = unzip3 leftbot
@@ -43,7 +44,7 @@ getBox3 (UnionR3 r symbObjs) = ((left-r,bot-r,inward-r), (right+r,top+r,out+r))
         top = maximum tops
         out = maximum outs
 getBox3 (IntersectR3 _ symbObjs) =
-    let 
+    let
         boxes = map getBox3 symbObjs
         (leftbot, topright) = unzip boxes
         (lefts, bots, ins) = unzip3 leftbot
@@ -55,8 +56,8 @@ getBox3 (IntersectR3 _ symbObjs) =
         top = minimum tops
         out = minimum outs
     in
-        if   top   > bot 
-          && right > left 
+        if   top   > bot
+          && right > left
           && out   > inward
         then ((left,bot,inward),(right,top,out))
         else ((0,0,0),(0,0,0))
@@ -103,6 +104,7 @@ getBox3 (ExtrudeRM _ twist scale translate symbObj eitherh) =
         ((x1,y1),(x2,y2)) = getBox2 symbObj
         (dx,dy) = (x2 - x1, y2 - y1)
         (xrange, yrange) = (map (\s -> x1+s*dx) $ range, map (\s -> y1+s*dy) $ range )
+
         h = case eitherh of
             Left h -> h
             Right hf -> hmax + 0.2*(hmax-hmin)
@@ -134,7 +136,7 @@ getBox3 (RotateExtrude _ _ (Left (xshift,yshift)) _ symbObj) =
         r = max x2 (x2 + xshift)
     in
         ((-r, -r, min y1 (y1 + yshift)),(r, r, max y2 (y2 + yshift)))
-getBox3 (RotateExtrude rot _ (Right f) rotate symbObj) = 
+getBox3 (RotateExtrude rot _ (Right f) rotate symbObj) =
     let
         ((x1,y1),(x2,y2)) = getBox2 symbObj
         (xshifts, yshifts) = unzip [f θ | θ <- [0 , rot / 10 .. rot] ]

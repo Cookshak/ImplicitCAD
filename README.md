@@ -4,14 +4,14 @@ ImplicitCAD: Math Inspired CAD
 Introduction
 ------------
 
-ImplicitCAD is a programmatic CAD program, implemented in [Haskell](https://www.haskell.org/). Unlike traditional CAD programs, programmatic CAD programs use text descriptions of objects, as in programming. Concepts like variables, control structures and abstraction are used, just as in programming. This provides a number of advantages:
+ImplicitCAD is a programmatic CAD program, implemented in haskell. Unlike traditional CAD programs, programmatic CAD programs use text descriptions of objects, as in programming. Concepts like variables, control structures and abstraction are used, just as in programming. This provides a number of advantages:
 
- - Objects can abstracted and reused
+ - Objects can be abstracted and reused
  - Repetitive tasks can be automated
  - Objects can be designed parametrically
  - The usual tools for software development (like version control) can be used
 
-A well known example of a programmatic CAD language and environment is [OpenSCAD](http://www.openscad.org/).
+The traditional example of programmatic CAD is OpenSCAD.
 
 Generally, objects in programmatic CAD are built with Constructive Solid Geometry or CSG. Unions, intersections and differences of simpler shapes slowly build the object. ImplicitCAD supports all this and much more! For example, it provides rounded unions so that one can have smooth interfaces between objects.
 
@@ -23,7 +23,7 @@ ImplicitCAD is very much a work in progress. The author considers it ready for b
 ExtOpenSCAD Examples
 --------------------
 
-Let's being with OpenSCAD examples, since they're likely a more comfortable format than Haskell for most readers :)
+Let's begin with OpenSCAD examples, since they're likely a more comfortable format that Haskell for most readers :)
 
 ImplicitCAD supports a modified version of the OpenSCAD language, used by the popular programmatic CAD tool of the same name.
 
@@ -190,6 +190,7 @@ Haskell Examples
 Everything you saw above can be done with the Haskell API. For example, a simple 2D example, the same as our first ExtOpenSCAD one:
 
 ```haskell
+-- Example 11 - the union of a square and a circle.
 import Graphics.Implicit
 
 out = union [
@@ -199,12 +200,13 @@ out = union [
 main = writeSVG 2 "test.svg" out
 ```
 
-![A Union of a Square and Circle](http://faikvm.com/ImplicitCAD/SquareCircleUnion.png)
+![A Union of a Square and a Circle](http://faikvm.com/ImplicitCAD/example11.svg)
 
 
 A rounded union:
 
 ```haskell
+-- Example 12 - the rounded union of a square and a circle.
 import Graphics.Implicit
 
 out = unionR 14 [
@@ -214,11 +216,12 @@ out = unionR 14 [
 main = writeSVG 2 "test.svg" out
 ```
 
-![A Rounded Union of a Square and Circle](http://faikvm.com/ImplicitCAD/SquareCircleUnionR.png)
+![A Rounded Union of a Square and a Circle](http://faikvm.com/ImplicitCAD/example12.svg)
 
 A simple 3D example:
 
 ```haskell
+-- Example 13 - the union of a cube and a sphere.
 import Graphics.Implicit
 
 out = union [
@@ -228,7 +231,7 @@ out = union [
 main = writeSTL 1 "test.stl" out
 ```
 
-![A Rounded Union of a Square and Circle](http://faikvm.com/ImplicitCAD/CubeSphereUnion.png)
+![A Rounded Union of a Cube and a Sphere](http://faikvm.com/ImplicitCAD/example13.png)
 
 You can do a whole lot more!
 
@@ -236,14 +239,14 @@ Try ImplicitCAD!
 ----------------
 
  1. Install GHC and cabal.
-     * Debian/Ubuntu: `apt-get install ghc cabal-install`
+     * Debain/Ubuntu: `apt-get install ghc cabal-install`
      * Archlinux: `pacman -S ghc cabal-install`
      * Red Hat/Fedora: `yum install ghc cabal-install`
      * Mac OSX:
          * Homebrew: `brew install ghc cabal-install`
-         * *Fink doesn't seem to have a package for cabal* Install the Haskell Platform manually as described [here](http://hackage.haskell.org/platform/mac.html).
+         * *Fink doesn't seem to have a package for cabal*; Install the Haskell Platform [manually](http://hackage.haskell.org/platform/mac.html).
      * Windows: Follows [these install instructions](http://hackage.haskell.org/platform/windows.html).
-     * Other unices: If your package manager does not include ghc and cabal you should install the Haskell platform as described [here](
+     * Other unices: If your package manager does not include ghc and cabal you should [install the Haskell platform](http://www.haskell.org/platform).
  2. You now have two options for installation:
      * Latest release:
          * Use cabal to install ImplicitCAD: `cabal update && cabal install implicit`
@@ -269,7 +272,7 @@ Try ImplicitCAD!
      * Haskell test results in `module is not loaded: 'Graphics.Implicit' (./Graphics/Implicit.hs)`
          * This is most likely a problem with your Linux distro and cabal not playing nice.
            GHC is not configured to see the ImplicitCAD libraries. You can confirm this by
-           try the test in `~/.cabal/lib/`. If that works, you should be able to use ghc
+           trying the test in `~/.cabal/lib/`. If that works, you should be able to use ghc
            anywhere with the `-Ldir` or `-llib` options. Alternatively, some people have
            permanently fixed this by doing the cabal install as root.
 
@@ -301,8 +304,7 @@ What still needs to be done:
 
 And a wishlist of things further in the future:
 
- - More optimisation
- - Fewer bugs
- - OpenGL viewer?
- - OpenGL acceleration?
-
+ - More optimisation.
+ - Less bugs.
+ - openGL viewer?
+ - openCL acceleration?

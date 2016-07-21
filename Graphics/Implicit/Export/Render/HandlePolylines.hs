@@ -11,7 +11,6 @@ cleanLoopsFromSegs =
     . joinSegs
     . filter polylineNotNull
 
-
 joinSegs :: [Polyline] -> [Polyline]
 joinSegs [] = []
 joinSegs (present:remaining) =
@@ -25,13 +24,14 @@ joinSegs (present:remaining) =
             (Nothing, _) -> present:(joinSegs remaining)
             (Just match, others) -> joinSegs $ (present ++ tail match): others
 
-reducePolyline ((x1,y1):(x2,y2):(x3,y3):others) = 
+-- FIXME: magic number.
+reducePolyline ((x1,y1):(x2,y2):(x3,y3):others) =
     if (x1,y1) == (x2,y2) then reducePolyline ((x2,y2):(x3,y3):others) else
-    if abs ( (y2-y1)/(x2-x1) - (y3-y1)/(x3-x1) ) < 0.0001 
+    if abs ( (y2-y1)/(x2-x1) - (y3-y1)/(x3-x1) ) < 0.0001
        || ( (x2-x1) == 0 && (x3-x1) == 0 && (y2-y1)*(y3-y1) > 0)
     then reducePolyline ((x1,y1):(x3,y3):others)
     else (x1,y1) : reducePolyline ((x2,y2):(x3,y3):others)
-reducePolyline ((x1,y1):(x2,y2):others) = 
+reducePolyline ((x1,y1):(x2,y2):others) =
     if (x1,y1) == (x2,y2) then reducePolyline ((x2,y2):others) else (x1,y1):(x2,y2):others
 reducePolyline l = l
 
@@ -40,11 +40,11 @@ polylineNotNull [] = False
 
 
 
-{-cleanLoopsFromSegs = 
+{-cleanLoopsFromSegs =
     connectPolys
     -- . joinSegs
     . filter (not . degeneratePoly)
-        
+
 polylinesFromSegsOnGrid = undefined
 
 degeneratePoly [] = True
@@ -91,7 +91,7 @@ connectPolys :: [Polyline] -> [Polyline]
 connectPolys [] = []
 connectPolys (present:remaining) =
     let
-        findNext (ps@(p:_):segs) = 
+        findNext (ps@(p:_):segs) =
             if p == last present
             then (Just ps, segs)
             else (a, ps:b) where (a,b) =  findNext segs

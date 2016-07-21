@@ -62,7 +62,7 @@ getLoops' segs workingLoop =
     let
         presEnd = last $ last workingLoop
         connects (x:_) = x == presEnd
-        connects [] = False; -- silence compiler warning.
+        connects [] = False -- Handle the empty case.
         possibleConts = filter connects segs
         nonConts = filter (not . connects) segs
         (next, unused) = if null possibleConts

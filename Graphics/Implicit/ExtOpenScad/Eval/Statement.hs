@@ -59,10 +59,10 @@ runStatementI (StatementI lineN (If expr a b)) = do
 
 runStatementI (StatementI lineN (NewModule name argTemplate suite)) = do
     argTemplate' <- Monad.forM argTemplate $ \(name, defexpr) -> do
-        defval <- mapMaybeM evalExpr defexpr 
+        defval <- mapMaybeM evalExpr defexpr
         return (name, defval)
     (varlookup, _, path, _, _) <- get
-    runStatementI $ StatementI lineN $ (Name name :=) $ LitE $ OModule $ \vals -> do 
+    runStatementI $ StatementI lineN $ (Name name :=) $ LitE $ OModule $ \vals -> do
         newNameVals <- Monad.forM argTemplate' $ \(name, maybeDef) -> do
             val <- case maybeDef of
                 Just def -> argument name `defaultTo` def
@@ -73,7 +73,7 @@ runStatementI (StatementI lineN (NewModule name argTemplate suite)) = do
             children = ONum $ fromIntegral $ length vals
             child = OModule $ \vals -> do
                 n :: ℕ <- argument "n";
-                return $ return $ return $ 
+                return $ return $ return $
                     if n <= length vals
                         then vals !! n
                         else OUndefined

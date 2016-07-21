@@ -1,9 +1,13 @@
+-- Implicit CAD. Copyright (C) 2011, Christopher Olah (chris@colah.ca)
+-- Released under the GNU GPL, see LICENSE
+
+{-# LANGUAGE ViewPatterns, RankNTypes, ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances #-}
+
 {-# LANGUAGE CPP #-}
 #if __GLASGOW_HASKELL__ < 710
 {-# LANGUAGE OverlappingInstances #-}
 #endif
 
-{-# LANGUAGE ViewPatterns, RankNTypes, ScopedTypeVariables, TypeSynonymInstances, FlexibleInstances #-}
 
 module Graphics.Implicit.ExtOpenScad.Util.OVal where
 
@@ -36,7 +40,11 @@ instance OTypeMirror Bool where
     fromOObj _ = Nothing
     toOObj b = OBool b
 
+#if __GLASGOW_HASKELL__ >= 710
 instance {-# Overlapping #-} OTypeMirror String where
+#else
+instance OTypeMirror String where
+#endif
     fromOObj (OString str) = Just str
     fromOObj _ = Nothing
     toOObj str = OString str
@@ -46,7 +54,11 @@ instance forall a. (OTypeMirror a) => OTypeMirror (Maybe a) where
     toOObj (Just a) = toOObj a
     toOObj Nothing  = OUndefined
 
+#if __GLASGOW_HASKELL__ >= 710
 instance {-# Overlappable #-} forall a. (OTypeMirror a) => OTypeMirror [a] where
+#else
+instance forall a. (OTypeMirror a) => OTypeMirror [a] where
+#endif
     fromOObj (OList list) = Monad.sequence . map fromOObj $ list
     fromOObj _ = Nothing
     toOObj list = OList $ map toOObj list
@@ -58,7 +70,7 @@ instance forall a b. (OTypeMirror a, OTypeMirror b) => OTypeMirror (a,b) where
 
 
 instance forall a b c. (OTypeMirror a, OTypeMirror b, OTypeMirror c) => OTypeMirror (a,b,c) where
-    fromOObj (OList ((fromOObj -> Just a):(fromOObj -> Just b):(fromOObj -> Just c):[])) = 
+    fromOObj (OList ((fromOObj -> Just a):(fromOObj -> Just b):(fromOObj -> Just c):[])) =
         Just (a,b,c)
     fromOObj _ = Nothing
     toOObj (a,b,c) = OList [toOObj a, toOObj b, toOObj c]
@@ -72,9 +84,9 @@ instance forall a b. (OTypeMirror a, OTypeMirror b) => OTypeMirror (a -> b) wher
         in case output of
             Just out -> out
             Nothing -> error $ "coercing OVal to a -> b isn't always safe; use a -> Maybe b"
-                          ++ " (trace: " ++ show oInput ++ " -> " ++ show oOutput ++ " )"
+                            ++ " (trace: " ++ show oInput ++ " -> " ++ show oOutput ++ " )"
     fromOObj _ = Nothing
-    toOObj f = OFunc $ \oObj -> 
+    toOObj f = OFunc $ \oObj ->
         case fromOObj oObj :: Maybe a of
             Nothing  -> OError ["bad input type"]
             Just obj -> toOObj $ f obj
@@ -111,20 +123,20 @@ caseOType = flip ($)
 infixr 2 <||>
 
 (<||>) :: forall desiredType out. (OTypeMirror desiredType)
-    => (desiredType -> out) 
+    => (desiredType -> out)
     -> (OVal -> out)
     -> (OVal -> out)
 
 (<||>) f g = \input ->
     let
         coerceAttempt = fromOObj input :: Maybe desiredType
-    in 
+    in
         if isJust coerceAttempt -- ≅ (/= Nothing) but no Eq req
         then f $ (\(Just a) -> a) coerceAttempt
         else g input
 
 divideObjs :: [OVal] -> ([SymbolicObj2], [SymbolicObj3], [OVal])
-divideObjs children = 
+divideObjs children =
     (map fromOObj2 . filter isOObj2 $ children,
      map fromOObj3 . filter isOObj3 $ children,
      filter (not . isOObj)          $ children)
