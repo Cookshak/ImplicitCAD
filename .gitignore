@@ -9,3 +9,5 @@ dist/
 Setup
 *.svg
 *.stl
+.stack-work/
+*.orig
