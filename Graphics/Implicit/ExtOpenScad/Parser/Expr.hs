@@ -40,8 +40,7 @@ literal = ("literal" ?:) $
 expr0 :: GenParser Char st Expr
 expr0 = exprN 0
 
-exprN :: Integer -> GenParser Char st Expr
-
+letExpr :: GenParser Char st Expr
 letExpr = "let expression" ?: do
         _ <- string "let"
         _ <- genSpace
@@ -61,6 +60,8 @@ letExpr = "let expression" ?: do
         let bindLets (ListE [Var boundName, boundExpr]) nestedExpr = (LamE [Name boundName] nestedExpr) :$ [boundExpr]
             bindLets _ e = e
         return $ foldr bindLets expr bindingPairs
+
+exprN :: Integer -> GenParser Char st Expr
 
 exprN 12 =
          literal
