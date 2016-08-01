@@ -105,7 +105,7 @@ runStatementI (StatementI lineN (ModuleCall name argsExpr suite)) = do
             Just foo            -> do
                     case getErrors foo of
                         Just err -> errorC lineN err
-                        Nothing  -> errorC lineN $ "Object called not module!"
+                        Nothing  -> errorC lineN "Object called not module!"
                     return []
             Nothing -> do
                 errorC lineN $ "Module " ++ name ++ " not in scope."
@@ -124,6 +124,11 @@ runStatementI (StatementI _ (Include name injectVals)) = do
             vals' <- getVals
             if injectVals then putVals (vals' ++ vals) else putVals vals
 
+runStatementI (StatementI _ (Sequence suite)) =
+    runSuite suite
+
+runStatementI (StatementI _ DoNothing) =
+    return ()
 
 
 runSuite :: [StatementI] -> StateC ()
