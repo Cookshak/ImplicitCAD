@@ -58,7 +58,7 @@ argument name =
         let
             val = fromOObj oObjVal :: Maybe desiredType
             errmsg = case oObjVal of
-                OError errs -> "error in computing value for arugment " ++ name
+                OError errs -> "error in computing value for argument " ++ name
                              ++ ": " ++ concat errs
                 _   ->  "arg " ++ show oObjVal ++ " not compatible with " ++ name
         -- Using /= Nothing would require Eq desiredType
