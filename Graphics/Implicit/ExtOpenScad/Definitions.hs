@@ -5,7 +5,7 @@ import Data.Map (Map)
 import           Control.Monad.State (StateT)
 
 
-type CompState = (VarLookup, [OVal], FilePath, [String], ())
+type CompState = (VarLookup, [OVal], FilePath, (), ())
 type StateC = StateT CompState IO
 
 type Symbol = String
