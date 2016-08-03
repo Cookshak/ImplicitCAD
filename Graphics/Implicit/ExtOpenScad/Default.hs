@@ -10,6 +10,8 @@ import Graphics.Implicit.ExtOpenScad.Definitions
 import Graphics.Implicit.ExtOpenScad.Util.OVal
 import Graphics.Implicit.ExtOpenScad.Primitives
 import Data.Map (fromList)
+import Control.Monad.State (liftIO)
+import Data.List (intercalate)
 
 defaultObjects :: VarLookup -- = Map String OVal
 defaultObjects = fromList $
@@ -18,6 +20,7 @@ defaultObjects = fromList $
     ++ defaultFunctions2
     ++ defaultFunctionsSpecial
     ++ defaultModules
+    ++ varArgModules
     ++ defaultPolymorphicFunctions
 
 -- Missing standard ones:
@@ -66,7 +69,7 @@ defaultFunctionsSpecial =
         ("map", toOObj $ flip $
             (map :: (OVal -> OVal) -> [OVal] -> [OVal] )
         )
-        
+
     ]
 
 
@@ -75,6 +78,18 @@ defaultModules =
     map (\(a,b) -> (a, OModule b)) primitives
 
 
+varArgModules :: [(String, OVal)]
+varArgModules =
+    [
+        ("echo", OVargsModule echo)
+    ] where
+        echo :: [(Maybe Symbol, OVal)] -> StateC [OVal]
+        echo args = do
+            let text = intercalate ", " $ map show2 args
+                show2 (Nothing, arg) = show arg
+                show2 (Just var, arg) = var ++ " = " ++ show arg
+            liftIO $ putStrLn $ "ECHO: " ++ text
+            return $ return OUndefined
 
 -- more complicated ones:
 
@@ -226,5 +241,3 @@ defaultPolymorphicFunctions =
         olength (OString s) = ONum $ fromIntegral $ length s
         olength (OList s)   = ONum $ fromIntegral $ length s
         olength a           = OError ["Can't take length of a " ++ oTypeStr a ++ "."]
-
-

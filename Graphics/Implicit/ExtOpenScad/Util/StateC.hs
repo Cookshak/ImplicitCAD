@@ -5,12 +5,8 @@ module Graphics.Implicit.ExtOpenScad.Util.StateC where
 import Graphics.Implicit.ExtOpenScad.Definitions
 
 import qualified Data.Map as Map
-import           Control.Monad.State (StateT, get, put, modify, liftIO)
+import           Control.Monad.State (get, put, modify, liftIO)
 import           System.FilePath((</>))
-
-
-type CompState = (VarLookup, [OVal], FilePath, (), ())
-type StateC = StateT CompState IO
 
 getVarLookup :: StateC VarLookup
 getVarLookup = fmap (\(a,_,_,_,_) -> a) get

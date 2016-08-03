@@ -13,7 +13,7 @@ import Text.ParserCombinators.Parsec hiding (State)
 import Data.Either
 
 -- to choose which expression parser to test, change enableAlternateParser to True or False
-enableAlternateParser = False
+enableAlternateParser = True
 
 infixr 1 -->
 (-->) :: String -> Expr -> Expectation
@@ -25,13 +25,13 @@ infixr 1 -->+
 (-->+) source (result, leftover) =
   (parseWithLeftOver testParser source) `shouldBe` (Right (result, leftover))
 
-isUndef source = 
+isUndef source =
     let result = (parseExpr source)
         undef (Right (LitE OUndefined)) = "Undefined"
         undef _ = show result
     in
         undef result `shouldBe` "Undefined"
- 
+
 ternaryIssue :: Expectation -> Expectation
 ternaryIssue _ = pendingWith "parser doesn't handle ternary operator correctly"
 
@@ -39,30 +39,30 @@ listIssue :: Expectation -> Expectation
 listIssue _ = pendingWith "the list construct does not exist in OpenSCAD and provides no syntactic or semantic advantage, and may make the parser more complex."
 
 
-parseExpr = 
+parseExpr =
     if enableAlternateParser
     then trace ("altExpr") parseAltExpr
     else trace ("origExpr") origParseExpr
 
-testParser = 
+testParser =
     if enableAlternateParser
     then trace ("altExpr") altExpr
     else trace ("origExpr") origExpr
 
 originalParserAdditionAstStyle :: Expectation -> Expectation
-originalParserAdditionAstStyle a = 
-    if enableAlternateParser 
+originalParserAdditionAstStyle a =
+    if enableAlternateParser
     then pendingWith "original parser generates + expression trees differently than - expression trees. The experimental parser treats them the same."
     else a
-    
-experimentalParserAstStyle a = 
-    if enableAlternateParser 
-    then a 
+
+experimentalParserAstStyle a =
+    if enableAlternateParser
+    then a
     else pendingWith "The test was written for the experimental parser's AST generation."
 
-experimentalFeature a = 
-    if enableAlternateParser 
-    then a 
+experimentalFeature a =
+    if enableAlternateParser
+    then a
     else pendingWith "This tests a feature of the experimental parser that does not work in the original parser."
 
 logicalSpec :: Spec
@@ -131,7 +131,7 @@ letBindingSpec = do
         "1 + let(b = y) b" --> app' "+" [num 1, lambda' [Name "b"] (Var "b") [Var "y"]]
     it "handles let on right side of a unary negation" $ do
         "- let(b = y) b" --> app' "negate" [lambda' [Name "b"] (Var "b") [Var "y"]]
-    
+
 exprSpec :: Spec
 exprSpec = do
   describe "literals" literalSpec
@@ -151,10 +151,10 @@ exprSpec = do
     it "handles nested vectors" $ do
       "[ 1, [2, 7], [3, 4, 5, 6] ]" -->  ListE [num 1, ListE [num 2, num 7], ListE [num 3, num 4, num 5, num 6]]
     it "handles lists" $ do
-     listIssue $ 
+     listIssue $
       "( 1, 2, 3 )" -->  ListE [num 1, num 2, num 3]
     it "handles generators" $
-      originalParserAdditionAstStyle $ 
+      originalParserAdditionAstStyle $
       "[ a : 1 : b + 10 ]" -->
       (app "list_gen" [Var "a", num 1, app "+" [Var "b", num 10]])
     it "handles generators" $
@@ -202,9 +202,9 @@ exprSpec = do
     it "handles unary + with string literal" $ do
       "+\"foo\"" -->  stringLiteral "foo"
     it "handles +" $ do
-     originalParserAdditionAstStyle $ 
+     originalParserAdditionAstStyle $
       "1 + 2" --> app "+" [num 1, num 2]
-     originalParserAdditionAstStyle $ 
+     originalParserAdditionAstStyle $
       "1 + 2 + 3" --> app "+" [num 1, num 2, num 3]
     it "handles 2 term +" $ do
      experimentalParserAstStyle $
@@ -274,4 +274,4 @@ exprSpec = do
     (Right $ app' "++" [app' "++" [Var "foo", Var "bar"], Var "baz"])
   describe "logical operators" logicalSpec
   describe "let expressions" letBindingSpec
-  
+

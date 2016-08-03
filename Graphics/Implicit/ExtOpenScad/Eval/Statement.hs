@@ -2,7 +2,6 @@
 
 module Graphics.Implicit.ExtOpenScad.Eval.Statement where
 
-import Graphics.Implicit.Definitions
 import Graphics.Implicit.ExtOpenScad.Definitions
 import Graphics.Implicit.ExtOpenScad.Util.OVal
 import Graphics.Implicit.ExtOpenScad.Util.ArgParser
@@ -16,7 +15,6 @@ import qualified Control.Monad as Monad
 import qualified Control.Monad.State as State
 import           Control.Monad.State (get, liftIO)
 import qualified System.FilePath as FilePath
-
 
 runStatementI :: StatementI -> StateC ()
 
@@ -97,11 +95,13 @@ runStatementI (StatementI lineN (ModuleCall name argsExpr suite)) = do
             val <- evalExpr expr
             return (posName, val)
         newVals <- case maybeMod of
-            Just (OModule mod) -> liftIO ioNewVals  where
-                argparser = mod childVals
+            Just (OModule modul) -> liftIO ioNewVals  where
+                argparser = modul childVals
                 ioNewVals = case fst $ argMap argsVal argparser of
                     Just iovals -> iovals
                     Nothing     -> return []
+            Just (OVargsModule modul) ->
+                modul argsVal
             Just foo            -> do
                     case getErrors foo of
                         Just err -> errorC lineN err
@@ -127,9 +127,11 @@ runStatementI (StatementI _ (Include name injectVals)) = do
 runStatementI (StatementI _ (Sequence suite)) =
     runSuite suite
 
-runStatementI (StatementI _ DoNothing) =
+runStatementI (StatementI _ (NewFunction _ _ _)) =
     return ()
 
+runStatementI (StatementI _ DoNothing) =
+    return ()
 
 runSuite :: [StatementI] -> StateC ()
 runSuite stmts = Monad.mapM_ runStatementI stmts

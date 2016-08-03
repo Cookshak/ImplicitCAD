@@ -469,9 +469,9 @@ unit = moduleWithSuite "unit" $ \children -> do
 (<|>) :: ArgParser a -> ArgParser a -> ArgParser a
 (<|>) = Monad.mplus
 
-moduleWithSuite :: t -> t1 -> (t, t1)
+moduleWithSuite :: String -> ([OVal] -> ArgParser (IO [OVal])) -> (String, [OVal] -> ArgParser (IO [OVal]))
 moduleWithSuite name modArgMapper = (name, modArgMapper)
-moduleWithoutSuite :: t -> a -> (t, b -> a)
+moduleWithoutSuite :: String -> ArgParser (IO [OVal]) -> (String, b -> ArgParser (IO [OVal]))
 moduleWithoutSuite name modArgMapper = (name, const modArgMapper)
 
 addObj3 :: SymbolicObj3 -> ArgParser (IO [OVal])

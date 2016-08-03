@@ -8,7 +8,7 @@ module Graphics.Implicit.ExtOpenScad (runOpenscad, OVal (..) ) where
 
 import Graphics.Implicit.Definitions (SymbolicObj2, SymbolicObj3)
 import Graphics.Implicit.ExtOpenScad.Definitions (VarLookup, OVal(..))
-import Graphics.Implicit.ExtOpenScad.Parser.Statement (parseProgram)
+import Graphics.Implicit.ExtOpenScad.Parser.AltStatement (parseProgram)
 import Graphics.Implicit.ExtOpenScad.Eval.Statement (runStatementI)
 import Graphics.Implicit.ExtOpenScad.Default (defaultObjects)
 import Graphics.Implicit.ExtOpenScad.Util.OVal (divideObjs)

@@ -2,6 +2,11 @@ module Graphics.Implicit.ExtOpenScad.Definitions where
 
 import Graphics.Implicit.Definitions
 import Data.Map (Map)
+import           Control.Monad.State (StateT)
+
+
+type CompState = (VarLookup, [OVal], FilePath, [String], ())
+type StateC = StateT CompState IO
 
 type Symbol = String
 
@@ -44,6 +49,7 @@ data OVal = OUndefined
          | OString String
          | OFunc (OVal -> OVal)
          | OModule ([OVal] -> ArgParser (IO [OVal]))
+         | OVargsModule ([(Maybe Symbol, OVal)] -> StateC [OVal])
          | OObj3 SymbolicObj3
          | OObj2 SymbolicObj2
 
@@ -62,6 +68,7 @@ instance Show OVal where
     show (OString s) = show s
     show (OFunc _) = "<function>"
     show (OModule _) = "module"
+    show (OVargsModule _) = "varargs module"
     show (OError msgs) = "Execution Error:\n" ++ foldl1 (\a b -> a ++ "\n" ++ b) msgs
     show (OObj2 obj) = "<obj2: " ++ show obj ++ ">"
     show (OObj3 obj) = "<obj3: " ++ show obj ++ ">"

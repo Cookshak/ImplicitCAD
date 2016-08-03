@@ -4,7 +4,7 @@ import Test.Hspec
 import Text.ParserCombinators.Parsec hiding (State)
 import ParserSpec.Util
 import Graphics.Implicit.ExtOpenScad.Definitions
-import Graphics.Implicit.ExtOpenScad.Parser.Statement
+import Graphics.Implicit.ExtOpenScad.Parser.AltStatement
 import Data.Either
 
 parsesAs :: String -> [StatementI] -> Expectation
@@ -39,7 +39,7 @@ assignmentSpec = do
   it "handles the function keyword" $
     "function foo(x, y) = x * y;" `parsesAs` single fooFunction
   it "handles function with let expression" $
-    "function withlet(b) = let (c = 5) b + c;" `parsesAs` 
+    "function withlet(b) = let (c = 5) b + c;" `parsesAs`
     (single $ (Name "withlet" := LamE [Name "b"] (LamE [Name "c"] (Var "+" :$ [ListE [Var "b",Var "c"]]) :$ [num 5])))
   it "nested indexing" $
     "x = [y[0] - z * 2];" `parsesAs`
