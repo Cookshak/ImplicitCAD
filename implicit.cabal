@@ -80,6 +80,9 @@ library
         -- interface.
         Graphics.Implicit.ExtOpenScad.Parser.Statement
         Graphics.Implicit.ExtOpenScad.Parser.Expr
+        Graphics.Implicit.ExtOpenScad.Parser.AltStatement
+        Graphics.Implicit.ExtOpenScad.Parser.AltExpr
+        Graphics.Implicit.ExtOpenScad.Parser.Lexer
         Graphics.Implicit.ExtOpenScad.Definitions
 
     other-modules:
