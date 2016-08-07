@@ -11,3 +11,6 @@ Setup
 *.stl
 .stack-work/
 *.orig
+*.log
+/ImplicitCAD.lkshs
+/ImplicitCAD.lkshw
