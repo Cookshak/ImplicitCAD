@@ -9,8 +9,10 @@ import Graphics.Implicit.Definitions
 import Graphics.Implicit.ExtOpenScad.Definitions
 import Graphics.Implicit.ExtOpenScad.Util.OVal
 import Graphics.Implicit.ExtOpenScad.Primitives
-import Data.Map (fromList)
-import Control.Monad.State (liftIO)
+import Graphics.Implicit.ExtOpenScad.Util.StateC
+import Data.Map (fromList, insert)
+import qualified Data.Map as Map
+import Control.Monad.State (lift, liftIO, liftM)
 import Data.List (intercalate)
 
 defaultObjects :: VarLookup -- = Map String OVal
@@ -66,7 +68,7 @@ defaultFunctions2 = map (\(a,b) -> (a, toOObj (b :: ℝ -> ℝ -> ℝ) ))
 defaultFunctionsSpecial :: [([Char], OVal)]
 defaultFunctionsSpecial =
     [
-        ("map", toOObj $ flip $
+        ("map", toOObj $ flip
             (map :: (OVal -> OVal) -> [OVal] -> [OVal] )
         )
 
@@ -82,14 +84,36 @@ varArgModules :: [(String, OVal)]
 varArgModules =
     [
         ("echo", OVargsModule echo)
+       ,("for", OVargsModule for)
     ] where
-        echo :: [(Maybe Symbol, OVal)] -> StateC [OVal]
-        echo args = do
-            let text = intercalate ", " $ map show2 args
-                show2 (Nothing, arg) = show arg
-                show2 (Just var, arg) = var ++ " = " ++ show arg
-            liftIO $ putStrLn $ "ECHO: " ++ text
-            return $ return OUndefined
+
+        echo :: [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
+        echo args suite runSuite = do
+            let text a = intercalate ", " $ map show' a
+                show' (Nothing, arg) = show arg
+                show' (Just var, arg) = var ++ " = " ++ show arg
+            liftIO $ putStrLn $ "ECHO: " ++ text args
+            runSuite suite
+
+        -- convert the loop iterator variable's expression value to a list (possibly of one value)
+        valsList :: OVal -> [OVal]
+        valsList v@(OBool _) = [v]
+        valsList v@(ONum _) = [v]
+        valsList v@(OString _) = [v]
+        valsList (OList vs) = vs
+        valsList _ = []
+
+        -- convert a list of arguments into a list of functions to transform the VarLookup with new bindings for each possible iteration.
+        iterator :: [(Maybe String, OVal)] -> [VarLookup -> VarLookup]
+        iterator [] = [id]
+        iterator ((Nothing, vals):iteratorz) = [outer | _ <- valsList vals, outer <- iterator iteratorz]
+        iterator ((Just var, vals):iteratorz) = [outer . inner | inner <- map (Map.insert var) (valsList vals), outer <- iterator iteratorz]
+
+        for :: [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
+        for args runSuite = do
+            --varlookup <- getVarLookup
+            --_ <- return $ map (runSuite.($ varlookup)) $ iterator args
+            return $ return ()
 
 -- more complicated ones:
 

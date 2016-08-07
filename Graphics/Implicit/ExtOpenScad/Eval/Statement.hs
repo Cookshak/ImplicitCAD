@@ -90,19 +90,22 @@ runStatementI (StatementI lineN (NewModule name argTemplate suite)) = do
 runStatementI (StatementI lineN (ModuleCall name argsExpr suite)) = do
         maybeMod  <- lookupVar name
         (varlookup, _, path, _, _) <- get
-        childVals <- fmap reverse $ liftIO $ runSuiteCapture varlookup path suite
         argsVal   <- Monad.forM argsExpr $ \(posName, expr) -> do
             val <- evalExpr expr
             return (posName, val)
         newVals <- case maybeMod of
-            Just (OModule modul) -> liftIO ioNewVals  where
-                argparser = modul childVals
-                ioNewVals = case fst $ argMap argsVal argparser of
-                    Just iovals -> iovals
-                    Nothing     -> return []
-            Just (OVargsModule modul) ->
-                modul argsVal
-            Just foo            -> do
+            Just (OModule modul) -> do
+                childVals <- fmap reverse $ liftIO $ runSuiteCapture varlookup path suite
+                let
+                    argparser = modul childVals
+                    ioNewVals = case fst $ argMap argsVal argparser of
+                        Just iovals -> iovals
+                        Nothing     -> return []
+                liftIO ioNewVals
+            Just (OVargsModule modul) -> do
+                _ <- modul argsVal suite runSuite -- no values are returned
+                return []
+            Just foo -> do
                     case getErrors foo of
                         Just err -> errorC lineN err
                         Nothing  -> errorC lineN "Object called not module!"
@@ -127,14 +130,14 @@ runStatementI (StatementI _ (Include name injectVals)) = do
 runStatementI (StatementI _ (Sequence suite)) =
     runSuite suite
 
-runStatementI (StatementI _ (NewFunction _ _ _)) =
+runStatementI (StatementI _ NewFunction{}) =
     return ()
 
 runStatementI (StatementI _ DoNothing) =
     return ()
 
 runSuite :: [StatementI] -> StateC ()
-runSuite stmts = Monad.mapM_ runStatementI stmts
+runSuite = Monad.mapM_ runStatementI
 
 runSuiteCapture :: VarLookup -> FilePath -> [StatementI] -> IO [OVal]
 runSuiteCapture varlookup path suite = do
@@ -143,6 +146,5 @@ runSuiteCapture varlookup path suite = do
         (varlookup, [], path, (), () )
     return res
 
-
-
-
+runSuiteInModule :: FilePath -> [StatementI] -> VarLookup -> IO [OVal]
+runSuiteInModule path suite varlookup = runSuiteCapture varlookup path suite
