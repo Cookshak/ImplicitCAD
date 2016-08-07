@@ -24,12 +24,12 @@ pushVals vals = modify (\(a,b,c,d,e) -> (a, vals ++ b,c,d,e))
 
 getVals :: StateC [OVal]
 getVals = do
-    (a,b,c,d,e) <- get
+    (_, b, _, _, _) <- get
     return b
 
 putVals :: [OVal] -> StateC ()
 putVals vals = do
-    (a,b,c,d,e) <- get
+    (a, _, c, d, e) <- get
     put (a,vals,c,d,e)
 
 withPathShiftedBy :: FilePath -> StateC a -> StateC a
@@ -43,13 +43,18 @@ withPathShiftedBy pathShift s = do
 
 getPath :: StateC FilePath
 getPath = do
-    (a,b,c,d,e) <- get
-    return c
+    (_, _, path, _, _) <- get
+    return path
 
 getRelPath :: FilePath -> StateC FilePath
 getRelPath relPath = do
     path <- getPath
     return $ path </> relPath
+
+languageOptions :: StateC LanguageOpts
+languageOptions = do
+    (_, _, _, opts, _) <- get
+    return opts
 
 errorC lineN err = liftIO $ putStrLn $ "At " ++ show lineN ++ ": " ++ err
 

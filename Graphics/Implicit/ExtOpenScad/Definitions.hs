@@ -2,10 +2,9 @@ module Graphics.Implicit.ExtOpenScad.Definitions where
 
 import Graphics.Implicit.Definitions
 import Data.Map (Map)
-import           Control.Monad.State (StateT)
+import Control.Monad.State (StateT)
 
-
-type CompState = (VarLookup, [OVal], FilePath, (), ())
+type CompState = (VarLookup, [OVal], FilePath, LanguageOpts, ())
 type StateC = StateT CompState IO
 
 type Symbol = String
@@ -75,6 +74,18 @@ instance Show OVal where
 
 type VarLookup = Map String OVal
 type FStack = [OVal]
+
+data LanguageOpts = LanguageOpts
+    { alternateParser :: Bool
+    , openScadCompatibility :: Bool
+    }
+
+instance Show LanguageOpts where
+    show (LanguageOpts altParser openScadCompat) =
+        "LanguageOpts alternateParser: " ++
+        show altParser ++
+        ", openScadCompatibility: " ++
+        show openScadCompat
 
 collector :: Symbol -> [Expr] -> Expr
 collector _ [x] = x

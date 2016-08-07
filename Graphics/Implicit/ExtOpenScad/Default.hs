@@ -29,7 +29,8 @@ defaultObjects = fromList $
 
 defaultConstants :: [([Char], OVal)]
 defaultConstants = map (\(a,b) -> (a, toOObj (b::ℝ) ))
-    [("pi", pi)]
+    [("pi", pi)
+    ,("PI", pi)]
 
 defaultFunctions :: [([Char], OVal)]
 defaultFunctions = map (\(a,b) -> (a, toOObj ( b :: ℝ -> ℝ)))
@@ -88,10 +89,17 @@ varArgModules =
 
         echo :: [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
         echo args suite runSuite = do
+            languageOpts <- languageOptions
             let text a = intercalate ", " $ map show' a
                 show' (Nothing, arg) = show arg
                 show' (Just var, arg) = var ++ " = " ++ show arg
-            liftIO $ putStrLn $ "ECHO: " ++ text args
+                showe' (Nothing, OString arg) = arg
+                showe' (Just var, arg) = var ++ " = " ++ showe' (Nothing, arg)
+                showe' a = show' a
+                compat = openScadCompatibility languageOpts
+                openScadFormat = "ECHO: " ++ text args
+                extopenscadFormat = concatMap showe' args
+            liftIO $ putStrLn $ if compat then openScadFormat else extopenscadFormat
             runSuite suite
 
         -- convert the loop iterator variable's expression value to a list (possibly of one value)

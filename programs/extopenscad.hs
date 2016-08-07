@@ -39,7 +39,7 @@ import Data.IORef (writeIORef)
 -- Functions and types for dealing with the types used by runOpenscad.
 -- Note that Map is different than the maps used by the prelude functions.
 import qualified Data.Map.Strict as Map (Map, lookup)
-import Graphics.Implicit.ExtOpenScad.Definitions (OVal (ONum))
+import Graphics.Implicit.ExtOpenScad.Definitions (OVal (ONum), LanguageOpts(LanguageOpts))
 
 -- Operator to subtract two points. Used when defining the resolution of a 2d object.
 import Data.AffineSpace ((.-.))
@@ -66,6 +66,8 @@ data ExtOpenScadOpts = ExtOpenScadOpts
     , resolution :: Maybe ℝ
     , xmlError :: Bool
     , inputFile :: FilePath
+    , alternateParser :: Bool
+    , openScadCompatibility :: Bool
     }
 
 -- A datatype enumerating our output file formats types.
@@ -134,6 +136,16 @@ extOpenScadOpts = ExtOpenScadOpts
     <*> argument str
         (  metavar "FILE"
         <> help "Input extended OpenSCAD file"
+        )
+    <*> switch
+        (  short 'A'
+        <> long "alternate-parser"
+        <> help "Use the experimental alternate parser which will work with fewer ExtOpenScad files and more OpenSCAD files"
+        )
+    <*> switch
+        (  short 'O'
+        <> long "openscad-compatibility"
+        <> help "Favour compatibility with OpenSCAD semantics, where they are incompatible with ExtOpenScad semantics"
         )
 
 -- Try to look up an output format from a supplied extension.
@@ -211,9 +223,10 @@ run args = do
                 _ | Just fmt <- outputFormat args -> Just $ fmt
                 _ | Just file <- outputFile args  -> Just $ guessOutputFormat file
                 _                                 -> Nothing
+        languageOpts = LanguageOpts (alternateParser args) (openScadCompatibility args)
     putStrLn $ "Processing File."
 
-    case runOpenscad content of
+    case runOpenscad languageOpts content of
         Left err -> putStrLn $ show $ err
         Right openscadProgram -> do
             s@(_, obj2s, obj3s) <- openscadProgram
@@ -250,6 +263,6 @@ main = execParser opts >>= run
     where
         opts= info (helper <*> extOpenScadOpts)
               ( fullDesc
-              <> progDesc "ImplicitCAD: Extended OpenSCAD interpreter." 
+              <> progDesc "ImplicitCAD: Extended OpenSCAD interpreter."
               <> header "extopenscad - Extended OpenSCAD"
               )

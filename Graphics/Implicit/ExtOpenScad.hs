@@ -1,5 +1,6 @@
 -- Implicit CAD. Copyright (C) 2011, Christopher Olah (chris@colah.ca)
 -- Copyright (C) 2014 2015, Julia Longtin (julial@turinglace.com)
+-- Copyright (C) 2016, Kelvin Cookshaw (kelvin@cookshaw.com)
 -- Released under the GNU GPL, see LICENSE
 
 -- We'd like to parse openscad code, with some improvements, for backwards compatability.
@@ -7,8 +8,9 @@
 module Graphics.Implicit.ExtOpenScad (runOpenscad, OVal (..) ) where
 
 import Graphics.Implicit.Definitions (SymbolicObj2, SymbolicObj3)
-import Graphics.Implicit.ExtOpenScad.Definitions (VarLookup, OVal(..))
-import Graphics.Implicit.ExtOpenScad.Parser.AltStatement (parseProgram)
+import Graphics.Implicit.ExtOpenScad.Definitions (VarLookup, OVal(..), LanguageOpts(..))
+import Graphics.Implicit.ExtOpenScad.Parser.Statement (origParseProgram)
+import Graphics.Implicit.ExtOpenScad.Parser.AltStatement (altParseProgram)
 import Graphics.Implicit.ExtOpenScad.Eval.Statement (runStatementI)
 import Graphics.Implicit.ExtOpenScad.Default (defaultObjects)
 import Graphics.Implicit.ExtOpenScad.Util.OVal (divideObjs)
@@ -19,18 +21,19 @@ import qualified Control.Monad.State as State (runStateT)
 import qualified System.Directory as Dir (getCurrentDirectory)
 
 -- Small wrapper to handle parse errors, etc.
-runOpenscad :: [Char] -> Either Parsec.ParseError (IO (VarLookup, [SymbolicObj2], [SymbolicObj3]))
-runOpenscad s =
+runOpenscad :: LanguageOpts -> String -> Either Parsec.ParseError (IO (VarLookup, [SymbolicObj2], [SymbolicObj3]))
+runOpenscad languageOpts s =
     let
         initial =  defaultObjects
         rearrange (_, (varlookup, ovals, _ , _ , _)) = (varlookup, obj2s, obj3s) where
                                   (obj2s, obj3s, _ ) = divideObjs ovals
+        parseProgram = if alternateParser languageOpts then altParseProgram else origParseProgram
     in case parseProgram "" s of
         Left e -> Left e
         Right sts -> Right
             $ fmap rearrange
             $ (\sts -> do
                 path <- Dir.getCurrentDirectory
-                State.runStateT sts (initial, [], path, (), () )
+                State.runStateT sts (initial, [], path, languageOpts, () )
             )
             $ Monad.mapM_ runStatementI sts

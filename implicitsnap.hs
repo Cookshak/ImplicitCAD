@@ -17,7 +17,7 @@ import Snap.Util.GZip (withCompression)
 -- Our Extended OpenScad interpreter, and the extrudeR function for making 2D objects 3D.
 import Graphics.Implicit (runOpenscad, extrudeR)
 
-import Graphics.Implicit.ExtOpenScad.Definitions (OVal (ONum))
+import Graphics.Implicit.ExtOpenScad.Definitions (OVal (ONum), LanguageOpts(LanguageOpts))
 
 -- Functions for finding a box around an object, so we can define the area we need to raytrace inside of.
 import Graphics.Implicit.ObjectUtil (getBox2, getBox3)
@@ -112,7 +112,8 @@ executeAndExport content callback maybeFormat =
         callbackF True  is2D w msg =
             callback ++ "([new Shape()," ++ show msg ++ "," ++ showB is2D ++ "," ++ show w ++ "]);"
         callbackS str   msg = callback ++ "([" ++ show str ++ "," ++ show msg ++ ",null,null]);"
-    in case runOpenscad content of
+        languageOptions = LanguageOpts False False
+    in case runOpenscad languageOptions content of
         Left err ->
             let
                 line = sourceLine . errorPos $ err
