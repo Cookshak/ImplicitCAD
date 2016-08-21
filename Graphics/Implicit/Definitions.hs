@@ -3,7 +3,7 @@
 -- Copyright 2015 2016, Mike MacHenry (mike.machenry@gmail.com)
 -- Released under the GNU GPL, see LICENSE
 
-{-# LANGUAGE FlexibleInstances, TypeSynonymInstances, OverlappingInstances #-}
+{-# LANGUAGE FlexibleInstances, TypeSynonymInstances #-}
 
 -- Definitions of the types (and a few functions) used in ImplicitCAD.
 
@@ -76,7 +76,7 @@ import Data.IORef (IORef, newIORef, readIORef)
 import System.IO.Unsafe (unsafePerformIO)
 import Data.VectorSpace (Scalar, InnerSpace, (<.>))
 
--- Let's make things a bit nicer. 
+-- Let's make things a bit nicer.
 -- Following the math notation ℝ, ℝ², ℝ³...
 -- Supports changing Float to Double for more precision!
 -- FIXME: what about using rationals instead of Float/Double?
@@ -179,7 +179,7 @@ data SymbolicObj2 =
 
 -- | A symbolic 3D format!
 
-data SymbolicObj3 = 
+data SymbolicObj3 =
     -- Primitives
       Rect3R ℝ ℝ3 ℝ3
     | Sphere ℝ
@@ -226,7 +226,7 @@ type Rectilinear3 = [Box3]
 
 -- | Now for something that makes me a bad person...
 --   I promise I'll use it for good, not evil!
---   I don't want to reparse the program arguments 
+--   I don't want to reparse the program arguments
 --   everytime I want to know if XML errors are needed.
 
 {-# NOINLINE xmlErrorOn #-}

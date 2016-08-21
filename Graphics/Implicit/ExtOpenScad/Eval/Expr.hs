@@ -40,7 +40,6 @@ evalExpr expr = do
     return $ valf []
 
 
-
 evalExpr' :: Expr -> StateT (VarLookup, [String]) IO ([OVal] -> OVal)
 
 evalExpr' (Var   name ) = do
@@ -49,7 +48,7 @@ evalExpr' (Var   name ) = do
         case (Map.lookup name varlookup, List.findIndex (==name) namestack) of
             (_, Just pos) -> \s -> s !! pos
             (Just val, _) -> const val
-            _             -> const $ OError ["Variable " ++ name ++ " not in scope" ]   
+            _             -> const $ OError ["Variable " ++ name ++ " not in scope" ]
 
 evalExpr' (LitE  val  ) = return $ const val
 
@@ -57,20 +56,20 @@ evalExpr' (ListE exprs) = do
     valFuncs <- Monad.mapM evalExpr' exprs
     return $ \s -> OList $ map ($ s) valFuncs
 
-evalExpr' (Var "+" :$ [ListE argExprs]) = 
+evalExpr' (Var "+" :$ [ListE argExprs]) =
     evalExpr'' $ Var "+" :$ [ListE argExprs]
 
-evalExpr' (Var "+" :$ argExprs) = 
+evalExpr' (Var "+" :$ argExprs) =
     evalExpr'' $ Var "+" :$ [ListE argExprs]
 
-evalExpr' (Var "*" :$ [ListE argExprs]) = 
+evalExpr' (Var "*" :$ [ListE argExprs]) =
     evalExpr'' $ Var "*" :$ [ListE argExprs]
 
-evalExpr' (Var "*" :$ argExprs) = 
+evalExpr' (Var "*" :$ argExprs) =
     evalExpr'' $ Var "*" :$ [ListE argExprs]
 
 evalExpr' (fexpr :$ argExprs) = evalExpr'' (fexpr :$ argExprs)
-    
+
 evalExpr' (LamE pats fexpr) = do
     fparts <- Monad.forM pats $ \pat -> do
         modify (\(vl, names) -> (vl, patVars pat ++ names))
@@ -84,7 +83,7 @@ evalExpr'' (fexpr :$ argExprs) = do
     argValFuncs <- Monad.mapM evalExpr' argExprs
     fValFunc <- evalExpr' fexpr
     return $ \s -> app (fValFunc s) (map ($ s) argValFuncs)
-        where 
+        where
             app f l = case (getErrors f, getErrors $ OList l) of
                 (Nothing, Nothing) -> app' f l where
                     app' (OFunc f) (x:xs) = app (f x) xs
