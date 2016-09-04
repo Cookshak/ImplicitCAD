@@ -27,6 +27,8 @@ import Data.Maybe (fromMaybe)
 -- For making the format guesser case insensitive when looking at file extensions.
 import Data.Char (toLower)
 
+import Data.List (intercalate)
+
 -- For defining the <> operator.
 import Data.Monoid (Monoid, mappend)
 
@@ -53,6 +55,8 @@ import Options.Applicative (fullDesc, progDesc, header, auto, info, helper, help
 -- For handling input/output files.
 import System.FilePath (splitExtension)
 
+import System.IO
+
 -- The following is needed to ensure backwards/forwards compatibility
 -- Backwards compatibility with old versions of Data.Monoid:
 infixr 6 <>
@@ -68,6 +72,7 @@ data ExtOpenScadOpts = ExtOpenScadOpts
     , inputFile :: FilePath
     , alternateParser :: Bool
     , openScadCompatibility :: Bool
+    , messageOutputFile :: Maybe FilePath
     }
 
 -- A datatype enumerating our output file formats types.
@@ -147,6 +152,15 @@ extOpenScadOpts = ExtOpenScadOpts
         <> long "openscad-compatibility"
         <> help "Favour compatibility with OpenSCAD semantics, where they are incompatible with ExtOpenScad semantics"
         )
+    <*> optional (
+      strOption
+        (  short 'e'
+        <> long "echo-output"
+        <> metavar "FILE"
+        <> help "Output file name for echo statements"
+        )
+      )
+
 
 -- Try to look up an output format from a supplied extension.
 readOutputFormat :: String -> Maybe OutputFormat
@@ -210,26 +224,33 @@ export2 posFmt res output obj =
         Nothing    -> writeSVG res output obj
         Just fmt   -> putStrLn $ "Unrecognized 2D format: "<>show fmt
 
+messageOutputHandle :: ExtOpenScadOpts -> IO Handle
+messageOutputHandle args = maybe (return stdout) (`openFile` WriteMode) (messageOutputFile args)
+
 -- Interpret arguments, and render the object defined in the supplied input file.
 run :: ExtOpenScadOpts -> IO()
 run args = do
     writeIORef xmlErrorOn (xmlError args)
 
-    putStrLn $ "Loading File."
+    putStrLn "Loading File."
     content <- readFile (inputFile args)
 
     let format =
             case () of
-                _ | Just fmt <- outputFormat args -> Just $ fmt
+                _ | Just fmt <- outputFormat args -> Just fmt
                 _ | Just file <- outputFile args  -> Just $ guessOutputFormat file
                 _                                 -> Nothing
         languageOpts = LanguageOpts (alternateParser args) (openScadCompatibility args)
-    putStrLn $ "Processing File."
+        (messages, openscadProgram) = runOpenscad languageOpts content
+    putStrLn "Processing File."
 
-    case runOpenscad languageOpts content of
-        Left err -> putStrLn $ show $ err
-        Right openscadProgram -> do
-            s@(_, obj2s, obj3s) <- openscadProgram
+    hMessageOutput <- messageOutputHandle args
+    hPutStr hMessageOutput $ intercalate "\n" messages
+
+    case openscadProgram of
+        Nothing -> putStrLn "Nothing was created."
+        Just results -> do
+            s@(_, obj2s, obj3s) <- results
             let res = maybe (getRes s) id (resolution args)
             let basename = fst (splitExtension $ inputFile args)
             let posDefExt = case format of

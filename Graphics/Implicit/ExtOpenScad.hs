@@ -21,7 +21,7 @@ import qualified Control.Monad.State as State (runStateT)
 import qualified System.Directory as Dir (getCurrentDirectory)
 
 -- Small wrapper to handle parse errors, etc.
-runOpenscad :: LanguageOpts -> String -> Either Parsec.ParseError (IO (VarLookup, [SymbolicObj2], [SymbolicObj3]))
+runOpenscad :: LanguageOpts -> String -> ([String], Maybe (IO (VarLookup, [SymbolicObj2], [SymbolicObj3])))
 runOpenscad languageOpts s =
     let
         initial =  defaultObjects
@@ -29,11 +29,11 @@ runOpenscad languageOpts s =
                                   (obj2s, obj3s, _ ) = divideObjs ovals
         parseProgram = if alternateParser languageOpts then altParseProgram else origParseProgram
     in case parseProgram "" s of
-        Left e -> Left e
-        Right sts -> Right
+        Left e -> ([show e], Nothing)
+        Right sts -> ([], Just
             $ fmap rearrange
             $ (\sts -> do
                 path <- Dir.getCurrentDirectory
                 State.runStateT sts (initial, [], path, languageOpts, () )
             )
-            $ Monad.mapM_ runStatementI sts
+            $ Monad.mapM_ runStatementI sts)
