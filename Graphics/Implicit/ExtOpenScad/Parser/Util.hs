@@ -1,6 +1,7 @@
 module Graphics.Implicit.ExtOpenScad.Parser.Util where
 
-import Text.ParserCombinators.Parsec  hiding (State)
+import Text.ParserCombinators.Parsec hiding (State)
+import Text.ParserCombinators.Parsec as P (sourceLine, sourceColumn, sourceName)
 import Graphics.Implicit.ExtOpenScad.Definitions
 
 -- white space, including tabs, newlines and comments
@@ -72,3 +73,6 @@ patternMatcher =
         _ <- char ']'
         return $ ListP components
     )
+
+sourcePosition :: SourcePos -> SourcePosition
+sourcePosition pos = SourcePosition (P.sourceLine pos) (P.sourceColumn pos) (P.sourceName pos)

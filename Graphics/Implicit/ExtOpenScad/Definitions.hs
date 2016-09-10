@@ -22,7 +22,7 @@ data Expr = Var Symbol
           | Expr :$ [Expr]
     deriving (Show, Eq)
 
-data StatementI = StatementI Int (Statement StatementI)
+data StatementI = StatementI SourcePosition (Statement StatementI)
     deriving (Show, Eq)
 
 data Statement st = Include String Bool
@@ -36,8 +36,6 @@ data Statement st = Include String Bool
                | Sequence [st]
                | DoNothing
     deriving (Show, Eq)
-
-
 
 -- | Objects for our OpenSCAD-like language
 data OVal = OUndefined
@@ -74,6 +72,26 @@ instance Show OVal where
 
 type VarLookup = Map String OVal
 type FStack = [OVal]
+
+-- in order to not propagate Parsec or other classes around, create our own source position type for the AST.
+data SourcePosition = SourcePosition
+    { sourceLine :: Int
+    , sourceColumn :: Int
+    , sourceName :: FilePath
+    }
+    deriving (Show, Eq)
+
+data MessageType = Info
+                 | Warning
+                 | Error
+                 | SyntaxError
+                 | Advice
+                 | Lint
+                 | Debug
+                 | Trace
+                 | Compatibility
+
+data Message = Message (MessageType, String)
 
 data LanguageOpts = LanguageOpts
     { alternateParser :: Bool

@@ -8,6 +8,7 @@ import Text.ParserCombinators.Parsec  hiding (State)
 import Graphics.Implicit.ExtOpenScad.Definitions
 import Graphics.Implicit.ExtOpenScad.Parser.Lexer
 import Graphics.Implicit.ExtOpenScad.Parser.AltExpr
+import Graphics.Implicit.ExtOpenScad.Parser.Util (sourcePosition)
 
 -- In general, the grammar is predictive and requires no more than one character of lookahead,
 -- except when differentiating between keywords and identifiers.
@@ -238,8 +239,8 @@ returnDoNothing = returnStatement DoNothing
 
 returnStatement :: Statement StatementI -> GenParser Char st StatementI
 returnStatement ast = do
-    line <- fmap sourceLine getPosition
-    return $ StatementI line ast
+    pos <- getPosition
+    return $ StatementI (sourcePosition pos) ast
 
 removeNoOps :: [StatementI] -> [StatementI]
 removeNoOps [] = []

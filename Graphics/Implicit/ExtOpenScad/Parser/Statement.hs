@@ -234,5 +234,7 @@ moduleArgsUnitDecl = do
     _ <- stringGS " ) "
     return argTemplate
 
-lineNumber = fmap sourceLine getPosition
+lineNumber = do
+    pos <- getPosition
+    return $ sourcePosition pos
 
