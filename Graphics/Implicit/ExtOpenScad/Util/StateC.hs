@@ -56,7 +56,15 @@ languageOptions = do
     (_, _, _, opts, _) <- get
     return opts
 
-errorC lineN err = liftIO $ putStrLn $ "At " ++ show lineN ++ ": " ++ err
+addMesg :: Message -> StateC ()
+addMesg = modify . (\message (a, b, c, d, messages) -> (a, b, c, d, messages ++ [message]))
+
+addMessage :: MessageType -> SourcePosition -> String -> StateC ()
+addMessage mtype pos text = addMesg $ Message mtype pos text
+
+errorC sourcePos err = do
+    liftIO $ putStrLn $ "At " ++ show sourcePos ++ ": " ++ err
+    addMessage Error sourcePos err
 
 mapMaybeM f (Just a) = do
     b <- f a

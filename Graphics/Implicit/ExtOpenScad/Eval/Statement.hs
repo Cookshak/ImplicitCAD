@@ -87,7 +87,7 @@ runStatementI (StatementI lineN (NewModule name argTemplate suite)) = do
             suiteVals  = runSuiteCapture varlookup' path opts suite
         return suiteVals
 
-runStatementI (StatementI lineN (ModuleCall name argsExpr suite)) = do
+runStatementI (StatementI sourcePos (ModuleCall name argsExpr suite)) = do
         opts <- languageOptions
         maybeMod  <- lookupVar name
         (varlookup, _, path, _, _) <- get
@@ -104,15 +104,15 @@ runStatementI (StatementI lineN (ModuleCall name argsExpr suite)) = do
                         Nothing     -> return []
                 liftIO ioNewVals
             Just (OVargsModule modul) -> do
-                _ <- modul argsVal suite runSuite -- no values are returned
+                _ <- modul sourcePos argsVal suite runSuite -- no values are returned
                 return []
             Just foo -> do
                     case getErrors foo of
-                        Just err -> errorC lineN err
-                        Nothing  -> errorC lineN "Object called not module!"
+                        Just err -> errorC sourcePos err
+                        Nothing  -> errorC sourcePos "Object called not module!"
                     return []
             Nothing -> do
-                errorC lineN $ "Module " ++ name ++ " not in scope."
+                errorC sourcePos $ "Module " ++ name ++ " not in scope."
                 return []
         pushVals newVals
 
@@ -144,7 +144,7 @@ runSuiteCapture :: VarLookup -> FilePath -> LanguageOpts -> [StatementI] -> IO [
 runSuiteCapture varlookup path opts suite = do
     (res, _) <- State.runStateT
         (runSuite suite >> getVals)
-        (varlookup, [], path, opts, () )
+        (varlookup, [], path, opts, [] )
     return res
 
 runSuiteInModule :: FilePath -> LanguageOpts -> [StatementI] -> VarLookup -> IO [OVal]

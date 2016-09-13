@@ -150,5 +150,3 @@ divideObjs children =
             isOObj     _      = False
             fromOObj2 (OObj2 x) = x
             fromOObj3 (OObj3 x) = x
-
-

@@ -4,7 +4,7 @@ import Graphics.Implicit.Definitions
 import Data.Map (Map)
 import Control.Monad.State (StateT)
 
-type CompState = (VarLookup, [OVal], FilePath, LanguageOpts, ())
+type CompState = (VarLookup, [OVal], FilePath, LanguageOpts, [Message])
 type StateC = StateT CompState IO
 
 type Symbol = String
@@ -46,7 +46,7 @@ data OVal = OUndefined
          | OString String
          | OFunc (OVal -> OVal)
          | OModule ([OVal] -> ArgParser (IO [OVal]))
-         | OVargsModule ([(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ())
+         | OVargsModule (SourcePosition -> [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ())
          | OObj3 SymbolicObj3
          | OObj2 SymbolicObj2
 
@@ -79,19 +79,27 @@ data SourcePosition = SourcePosition
     , sourceColumn :: Int
     , sourceName :: FilePath
     }
-    deriving (Show, Eq)
+    deriving (Eq)
+
+instance Show SourcePosition where
+    show (SourcePosition line col []) = "line " ++ show line ++ ", column " ++ show col
+    show (SourcePosition line col filePath) = "line " ++ show line ++ ", column " ++ show col ++ ", file " ++ filePath
 
 data MessageType = Info
+                 | Debug
+                 | Trace
                  | Warning
                  | Error
                  | SyntaxError
                  | Advice
                  | Lint
-                 | Debug
-                 | Trace
                  | Compatibility
+    deriving (Show, Eq)
 
-data Message = Message (MessageType, String)
+data Message = Message MessageType SourcePosition String
+    deriving (Eq)
+instance Show Message where
+    show (Message mtype pos text) = show mtype ++ " at " ++ show pos ++ ": " ++ show text
 
 data LanguageOpts = LanguageOpts
     { alternateParser :: Bool
