@@ -8,20 +8,21 @@
 module Graphics.Implicit.ExtOpenScad (runOpenscad, OVal (..) ) where
 
 import Graphics.Implicit.Definitions (SymbolicObj2, SymbolicObj3)
-import Graphics.Implicit.ExtOpenScad.Definitions (VarLookup, OVal(..), LanguageOpts(..), Message)
+import Graphics.Implicit.ExtOpenScad.Definitions (VarLookup, OVal(..), LanguageOpts(..), Message(Message), MessageType(SyntaxError))
 import Graphics.Implicit.ExtOpenScad.Parser.Statement (origParseProgram)
 import Graphics.Implicit.ExtOpenScad.Parser.AltStatement (altParseProgram)
+import Graphics.Implicit.ExtOpenScad.Parser.Util (sourcePosition)
 import Graphics.Implicit.ExtOpenScad.Eval.Statement (runStatementI)
 import Graphics.Implicit.ExtOpenScad.Default (defaultObjects)
 import Graphics.Implicit.ExtOpenScad.Util.OVal (divideObjs)
 
-import qualified Text.Parsec.Error as Parsec (ParseError)
+import qualified Text.Parsec.Error as Parsec (errorPos)
 import qualified Control.Monad as Monad (mapM_)
 import qualified Control.Monad.State as State (runStateT)
 import qualified System.Directory as Dir (getCurrentDirectory)
 
 -- Small wrapper to handle parse errors, etc.
-runOpenscad :: LanguageOpts -> String -> ([String], Maybe (IO (VarLookup, [SymbolicObj2], [SymbolicObj3], [Message])))
+runOpenscad :: LanguageOpts -> String -> IO (VarLookup, [SymbolicObj2], [SymbolicObj3], [Message])
 runOpenscad languageOpts s =
     let
         initial = defaultObjects
@@ -29,11 +30,10 @@ runOpenscad languageOpts s =
                                   (obj2s, obj3s, _ ) = divideObjs ovals
         parseProgram = if alternateParser languageOpts then altParseProgram else origParseProgram
     in case parseProgram "" s of
-        Left e -> ([show e], Nothing)
-        Right sts -> ([], Just
-            $ fmap rearrange
+        Left e -> return (initial, [], [], [Message SyntaxError (sourcePosition $ Parsec.errorPos e) $ show e])
+        Right sts -> fmap rearrange
             $ (\sts -> do
                 path <- Dir.getCurrentDirectory
                 State.runStateT sts (initial, [], path, languageOpts, [] )
             )
-            $ Monad.mapM_ runStatementI sts)
+            $ Monad.mapM_ runStatementI sts
