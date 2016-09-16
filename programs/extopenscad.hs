@@ -27,8 +27,6 @@ import Data.Maybe (fromMaybe)
 -- For making the format guesser case insensitive when looking at file extensions.
 import Data.Char (toLower)
 
-import Data.List (intercalate)
-
 -- For defining the <> operator.
 import Data.Monoid (Monoid, mappend)
 
@@ -245,14 +243,14 @@ run args = do
     putStrLn "Processing File."
 
     hMessageOutput <- messageOutputHandle args
-    -- hPutStr hMessageOutput $ intercalate "\n" messages
+
     s@(_, obj2s, obj3s, messages) <- openscadProgram
     let res = maybe (getRes s) id (resolution args)
     let basename = fst (splitExtension $ inputFile args)
     let posDefExt = case format of
                         Just f  -> Prelude.lookup f (map swap formatExtensions)
                         Nothing -> Nothing -- We don't know the format -- it will be 2D/3D default
-    hPutStr hMessageOutput $ intercalate "\n" $ map show messages
+    hPutStr hMessageOutput $ unlines "\n" $ map show messages
     case (obj2s, obj3s) of
         ([], [obj]) -> do
             let output = fromMaybe

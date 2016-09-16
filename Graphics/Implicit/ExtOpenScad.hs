@@ -16,7 +16,7 @@ import Graphics.Implicit.ExtOpenScad.Eval.Statement (runStatementI)
 import Graphics.Implicit.ExtOpenScad.Default (defaultObjects)
 import Graphics.Implicit.ExtOpenScad.Util.OVal (divideObjs)
 
-import qualified Text.Parsec.Error as Parsec (errorPos)
+import qualified Text.Parsec.Error as Err (errorPos, errorMessages, showErrorMessages)
 import qualified Control.Monad as Monad (mapM_)
 import qualified Control.Monad.State as State (runStateT)
 import qualified System.Directory as Dir (getCurrentDirectory)
@@ -29,8 +29,13 @@ runOpenscad languageOpts s =
         rearrange (_, (varlookup, ovals, _ , _ , messages)) = (varlookup, obj2s, obj3s, messages) where
                                   (obj2s, obj3s, _ ) = divideObjs ovals
         parseProgram = if alternateParser languageOpts then altParseProgram else origParseProgram
+        show' err
+            = Err.showErrorMessages "or" "unknown parse error"
+                                "expecting" "unexpected" "end of input"
+                               (Err.errorMessages err)
+        mesg e = Message SyntaxError (sourcePosition $ Err.errorPos e) $ show' e
     in case parseProgram "" s of
-        Left e -> return (initial, [], [], [Message SyntaxError (sourcePosition $ Parsec.errorPos e) $ show e])
+        Left e -> return (initial, [], [], [mesg e])
         Right sts -> fmap rearrange
             $ (\sts -> do
                 path <- Dir.getCurrentDirectory
