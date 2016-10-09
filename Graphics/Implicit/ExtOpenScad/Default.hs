@@ -83,12 +83,20 @@ defaultModules =
 varArgModules :: [(String, OVal)]
 varArgModules =
     [
-        ("echo", OVargsModule echo)
-       ,("for", OVargsModule for)
+        modVal "echo" echo
+       ,modVal "for" for
+       ,modVal "color" executeSuite
     ] where
+        modVal name func = (name, OVargsModule name func)
 
-        echo :: SourcePosition -> [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
-        echo pos args suite runSuite = do
+        -- execute only the child statement, without doing anything else. Useful for unimplemented functions.
+        executeSuite :: String -> SourcePosition -> [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
+        executeSuite name pos _ suite runSuite = do
+            addMessage Unimplemented pos $ "Module " ++ name ++ " not implemented"
+            runSuite suite
+
+        echo :: String -> SourcePosition -> [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
+        echo _ pos args suite runSuite = do
             languageOpts <- languageOptions
             let text a = intercalate ", " $ map show' a
                 show' (Nothing, arg) = show arg
@@ -100,7 +108,6 @@ varArgModules =
                 openScadFormat = "ECHO: " ++ text args
                 extopenscadFormat = concatMap showe' args
                 formattedMessage = if compat then openScadFormat else extopenscadFormat
-            liftIO $ putStrLn $ formattedMessage
             addMessage Info pos $ formattedMessage
             runSuite suite
 
@@ -118,8 +125,8 @@ varArgModules =
         iterator ((Nothing, vals):iterators) = [outer | _ <- valsList vals, outer <- iterator iterators]
         iterator ((Just var, vals):iterators) = [outer . inner | inner <- map (insert var) (valsList vals), outer <- iterator iterators]
 
-        for :: SourcePosition -> [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
-        for _ args suite runSuite = do
+        for :: String -> SourcePosition -> [(Maybe Symbol, OVal)] -> [StatementI] -> ([StatementI] -> StateC ()) -> StateC ()
+        for _ _ args suite runSuite = do
             _ <- forM (iterator args) $ \iter -> do
                 modifyVarLookup iter
                 runSuite suite
